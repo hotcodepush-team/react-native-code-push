@@ -2,6 +2,7 @@ package com.hotcodepush.reactnative
 
 import android.content.Context
 import com.facebook.react.ReactHost
+import com.facebook.react.ReactInstanceEventListener
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.JSBundleLoader
 import com.facebook.react.bridge.ReactContext
@@ -65,7 +66,12 @@ object HotCodePushReactHost {
         ) { runtime.resolveBundleLoader(embeddedBundleLoader) }
         val componentFactory = ComponentFactory()
         DefaultComponentsRegistry.register(componentFactory)
-        return ReactHostImpl(context, delegate, componentFactory, true, useDevSupport).also { reactHost = it }
+        return ReactHostImpl(context, delegate, componentFactory, true, useDevSupport).also {
+            it.addReactInstanceEventListener(object : ReactInstanceEventListener {
+                override fun onReactContextInitialized(context: ReactContext) = runtime.observeFirstRender(context)
+            })
+            reactHost = it
+        }
     }
 }
 

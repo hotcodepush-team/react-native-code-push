@@ -13,8 +13,12 @@ import android.util.Log
 import com.facebook.react.ReactApplication
 import com.facebook.react.bridge.JSBundleLoader
 import com.facebook.react.bridge.Promise
-import com.facebook.react.bridge.ReactMarker
-import com.facebook.react.bridge.ReactMarkerConstants
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.UIManager
+import com.facebook.react.bridge.UIManagerListener
+import com.facebook.react.common.annotations.UnstableReactNativeAPI
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.common.UIManagerType
 import com.hotcodepush.protocol.Clock
 import com.hotcodepush.protocol.Configuration
 import com.hotcodepush.protocol.Core
@@ -66,6 +70,30 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
         start(isHostAsking = true)
         val bundleFile = loader?.resolveBundleFile() ?: return embeddedBundleLoader
         return JSBundleLoader.createFileLoader(bundleFile.path)
+    }
+
+    /**
+     * A JavaScript instance was created, at the start and at every reload: its first mounted views are the first frame
+     * after the root view renders, the readiness signal `render`. An instance that mounts nothing never signals it.
+     */
+    @OptIn(UnstableReactNativeAPI::class)
+    fun observeFirstRender(reactContext: ReactContext) {
+        val uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC) ?: return
+        uiManager.addUIManagerEventListener(object : UIManagerListener {
+            override fun didDispatchMountItems(uiManager: UIManager) = Unit
+
+            override fun didMountItems(uiManager: UIManager) {
+                uiManager.removeUIManagerEventListener(this)
+                val core = core ?: return
+                scope.launch { core.handleRendered() }
+            }
+
+            override fun didScheduleMountItems(uiManager: UIManager) = Unit
+
+            override fun willDispatchViewUpdates(uiManager: UIManager) = Unit
+
+            override fun willMountItems(uiManager: UIManager) = Unit
+        })
     }
 
     // The Turbo Module
@@ -153,10 +181,6 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     }
 
     private fun observeAppLifecycle(core: Core) {
-        // The first frame after the root view renders, the readiness signal `render`; every reload renders a new root.
-        ReactMarker.addListener { name, _, _ ->
-            if (name == ReactMarkerConstants.CONTENT_APPEARED) scope.launch { core.handleRendered() }
-        }
         (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object : ActivityLifecycleObserver() {
             override fun onActivityPaused(activity: Activity) {
                 scope.launch { core.handleAppPause() }
