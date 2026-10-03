@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+env:
+  JAVA_VERSION: 21
+
+# The native code compiles inside an app: the platform jobs install the package from this commit into the demo at
+# the commit the baseline names and build it. Debug builds, which bundle no JavaScript and so run no embed step.
 jobs:
   javascript:
     name: Lint, typecheck, test and build the JavaScript
@@ -24,6 +29,67 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+  android:
+    name: Build the Android library inside the demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: package
+      - name: Read the pinned demo commit
+        id: baseline
+        run: echo "demo=$(node -p "require('./package/benchmarks/baseline.json').demo.commit")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: hotcodepush-team/react-native-code-push-demo
+          ref: ${{ steps.baseline.outputs.demo }}
+          path: demo
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package/.nvmrc
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Pack the package from this commit
+        working-directory: package
+        run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
+      - name: Prepare the demo with the package
+        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-embed
+      - run: ./gradlew assembleDebug --console=plain
+        working-directory: ${{ runner.temp }}/with/android
+  ios:
+    name: Build the iOS module inside the demo
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: package
+      - name: Read the pinned demo commit
+        id: baseline
+        run: echo "demo=$(node -p "require('./package/benchmarks/baseline.json').demo.commit")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: hotcodepush-team/react-native-code-push-demo
+          ref: ${{ steps.baseline.outputs.demo }}
+          path: demo
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package/.nvmrc
+      - run: brew install swiftlint
+      - run: swiftlint lint --quiet --strict ios
+        working-directory: package
+      - name: Pack the package from this commit
+        working-directory: package
+        run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
+      - name: Prepare the demo with the package
+        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-embed
+      - run: xcodebuild -workspace HotCodePushDemo.xcworkspace -scheme HotCodePushDemo -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build
+        working-directory: ${{ runner.temp }}/with/ios
   preview:
     name: Publish the preview build to pkg.pr.new
     runs-on: ubuntu-latest

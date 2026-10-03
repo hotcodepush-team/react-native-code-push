@@ -1,0 +1,23 @@
+{
+  "measuredAt": "2026-10-03",
+  "package": {
+    "commit": "86af7a05ebf8bfac615f21af8e683f3b8f340342"
+  },
+  "demo": {
+    "commit": "f81de286cfe01f65d67f020ff408078b686cba86"
+  },
+  "android": {
+    "releaseApkBytes": {
+      "with": 47543773,
+      "without": 46966076,
+      "added": 577697
+    }
+  },
+  "ios": {
+    "simulatorAppBytes": {
+      "with": 40884443,
+      "without": 37248622,
+      "added": 3635821
+    }
+  }
+}

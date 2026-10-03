@@ -1,0 +1,46 @@
+name: Baseline
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: 21
+
+jobs:
+  size:
+    name: Guard the binary size against the baseline
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: package
+      - name: Read the pinned demo commit
+        id: baseline
+        run: echo "demo=$(node -p "require('./package/benchmarks/baseline.json').demo.commit")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: hotcodepush-team/react-native-code-push-demo
+          ref: ${{ steps.baseline.outputs.demo }}
+          path: demo
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package/.nvmrc
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Pack the package from this pull request
+        working-directory: package
+        run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
+      - name: Prepare the demo with the package
+        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-embed
+      - name: Measure the sizes and compare them with the baseline
+        run: node package/benchmarks/measure-size.mjs "$RUNNER_TEMP/with" > "$RUNNER_TEMP/sizes.json" && node package/benchmarks/guard-size.mjs package/benchmarks/baseline.json "$RUNNER_TEMP/sizes.json" >> "$GITHUB_STEP_SUMMARY"
