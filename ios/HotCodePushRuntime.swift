@@ -49,6 +49,10 @@ import UIKit
         start(isHostAsking: false)
     }
 
+    @objc public func detach(_ eventSink: HotCodePushEventSink) {
+        if self.eventSink === eventSink { self.eventSink = nil }
+    }
+
     @objc public func invoke(_ methodName: String, options: [String: Any], resolve: @escaping (Any?) -> Void, reject: @escaping (String) -> Void) {
         guard let method = Method(rawValue: methodName) else {
             reject("HotCodePush has no method named \(methodName)")

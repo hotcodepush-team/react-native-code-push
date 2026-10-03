@@ -117,6 +117,8 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
     }
 
     override fun emitEvent(eventName: String, payload: JSONObject) {
+        // React Native hands the module its emitter callback after init; an event before that has no JavaScript listening yet.
+        if (mEventEmitterCallback == null) return
         val value = payload.toWritableMap()
         when (eventName) {
             "downloadProgress" -> emitOnDownloadProgress(value)

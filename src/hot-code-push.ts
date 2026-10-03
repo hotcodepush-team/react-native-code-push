@@ -28,6 +28,8 @@ const cycleListeners = new Set<CycleListener>();
 const rolledBackListeners = new Set<EventListener>();
 const subscriptions = new Set<NativeSubscription>();
 
+/** The `rolledBack` event the native side kept for this start, taken from it once; undefined until a listener asks. */
+let keptRolledBackEvent: Promise<object | null> | undefined;
 let runningCycleCount = 0;
 
 /**
@@ -96,14 +98,16 @@ function addNativeListener(
 
 /**
  * `rolledBack` belongs to the start that follows the rollback, before any listener exists: the native side keeps
- * the event and the first listener takes it, once.
+ * the event, the first listener takes it from there, and every listener of this start receives it.
  */
 function addRolledBackListener(
   listener: EventListener,
 ): HotCodePushListenerHandle {
   rolledBackListeners.add(listener);
-  void NativeHotCodePush.consumeRolledBack().then(result => {
-    const { event } = result as { event: object | null };
+  keptRolledBackEvent ??= NativeHotCodePush.consumeRolledBack().then(
+    result => (result as { event: object | null }).event,
+  );
+  void keptRolledBackEvent.then(event => {
     if (event !== null && rolledBackListeners.has(listener)) {
       listener(event);
     }

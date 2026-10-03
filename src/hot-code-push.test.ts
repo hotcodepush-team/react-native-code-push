@@ -1,7 +1,7 @@
 import type { RolledBackEvent } from '@hotcodepush/protocol';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import NativeHotCodePush from './NativeHotCodePush';
-import { HotCodePush, subscribeToRunningCycles } from './hot-code-push';
+import type NativeModule from './NativeHotCodePush';
+import type * as Sdk from './hot-code-push';
 
 vi.mock('./NativeHotCodePush', () => ({
   default: {
@@ -26,10 +26,16 @@ const ROLLED_BACK_EVENT: RolledBackEvent = {
 };
 
 describe('HotCodePush', () => {
+  let HotCodePush: typeof Sdk.HotCodePush;
+  let NativeHotCodePush: typeof NativeModule;
+  let subscribeToRunningCycles: typeof Sdk.subscribeToRunningCycles;
+
+  // A test is a start of the app: the module is loaded anew, as a JavaScript instance loads it.
   beforeEach(async () => {
-    vi.mocked(NativeHotCodePush.consumeRolledBack).mockReset();
-    vi.mocked(NativeHotCodePush.sync).mockReset();
-    await HotCodePush.removeAllListeners();
+    vi.resetModules();
+    NativeHotCodePush = (await import('./NativeHotCodePush')).default;
+    ({ HotCodePush, subscribeToRunningCycles } =
+      await import('./hot-code-push'));
   });
 
   describe('addListener', () => {
@@ -43,6 +49,21 @@ describe('HotCodePush', () => {
       await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(1));
 
       expect(listener).toHaveBeenCalledWith(ROLLED_BACK_EVENT);
+    });
+
+    it('should hand the rolledBack event to every listener when several listen', async () => {
+      vi.mocked(NativeHotCodePush.consumeRolledBack)
+        .mockResolvedValueOnce({ event: ROLLED_BACK_EVENT })
+        .mockResolvedValue({ event: null });
+      const firstListener = vi.fn();
+      const secondListener = vi.fn();
+
+      await HotCodePush.addListener('rolledBack', firstListener);
+      await HotCodePush.addListener('rolledBack', secondListener);
+      await Promise.resolve();
+
+      expect(firstListener).toHaveBeenCalledWith(ROLLED_BACK_EVENT);
+      expect(secondListener).toHaveBeenCalledWith(ROLLED_BACK_EVENT);
     });
 
     it('should call no rolledBack listener when the native side kept no event', async () => {

@@ -10,6 +10,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.View
+import android.view.ViewGroup
 import com.facebook.react.ReactApplication
 import com.facebook.react.bridge.JSBundleLoader
 import com.facebook.react.bridge.Promise
@@ -17,6 +19,7 @@ import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.UIManager
 import com.facebook.react.bridge.UIManagerListener
 import com.facebook.react.common.annotations.UnstableReactNativeAPI
+import com.facebook.react.uimanager.ReactRoot
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.common.UIManagerType
 import com.hotcodepush.protocol.Clock
@@ -73,8 +76,9 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     }
 
     /**
-     * A JavaScript instance was created, at the start and at every reload: its first mounted views are the first frame
-     * after the root view renders, the readiness signal `render`. An instance that mounts nothing never signals it.
+     * A JavaScript instance was created, at the start and at every reload: the first mount that leaves a view inside a
+     * React root is the first frame after the root view renders, the readiness signal `render`. The root itself is
+     * mounted before any render, so an instance that renders nothing never signals it.
      */
     @OptIn(UnstableReactNativeAPI::class)
     fun observeFirstRender(reactContext: ReactContext) {
@@ -83,6 +87,8 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
             override fun didDispatchMountItems(uiManager: UIManager) = Unit
 
             override fun didMountItems(uiManager: UIManager) {
+                val decorView = reactContext.currentActivity?.window?.decorView ?: return
+                if (!containsRenderedReactRoot(decorView)) return
                 uiManager.removeUIManagerEventListener(this)
                 val core = core ?: return
                 scope.launch { core.handleRendered() }
@@ -94,6 +100,12 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
 
             override fun willMountItems(uiManager: UIManager) = Unit
         })
+    }
+
+    private fun containsRenderedReactRoot(view: View): Boolean = when (view) {
+        is ReactRoot -> view.rootViewGroup.childCount > 0
+        is ViewGroup -> (0 until view.childCount).any { containsRenderedReactRoot(view.getChildAt(it)) }
+        else -> false
     }
 
     // The Turbo Module

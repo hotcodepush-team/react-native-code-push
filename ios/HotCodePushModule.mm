@@ -1,12 +1,14 @@
 #import "HotCodePushModule.h"
 
+#import <React/RCTInvalidating.h>
+
 #if __has_include(<HotcodepushReactNativeCodePush/HotcodepushReactNativeCodePush-Swift.h>)
 #import <HotcodepushReactNativeCodePush/HotcodepushReactNativeCodePush-Swift.h>
 #else
 #import "HotcodepushReactNativeCodePush-Swift.h"
 #endif
 
-@interface HotCodePushModule () <HotCodePushEventSink>
+@interface HotCodePushModule () <HotCodePushEventSink, RCTInvalidating>
 @end
 
 @implementation HotCodePushModule
@@ -17,6 +19,12 @@
     [HotCodePushRuntime.shared attach:self];
   }
   return self;
+}
+
+/// A reload ends this module's JavaScript and the callback its emit methods call: the runtime stops emitting through it.
+- (void)invalidate
+{
+  [HotCodePushRuntime.shared detach:self];
 }
 
 + (NSString *)moduleName
@@ -128,6 +136,10 @@
 
 - (void)emitEvent:(NSString *)eventName payload:(NSDictionary<NSString *, id> *)payload
 {
+  // React Native hands the module its emitter callback after init; an event before that has no JavaScript listening yet.
+  if (!_eventEmitterCallback) {
+    return;
+  }
   if ([eventName isEqualToString:@"downloadProgress"]) {
     [self emitOnDownloadProgress:payload];
   } else if ([eventName isEqualToString:@"updateAvailable"]) {
