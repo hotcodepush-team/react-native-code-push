@@ -6,6 +6,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
 import com.hotcodepush.protocol.ChannelChoice
+import com.hotcodepush.protocol.DebugScreen
 import com.hotcodepush.protocol.DownloadStrategy
 import com.hotcodepush.protocol.InstallStrategy
 import com.hotcodepush.protocol.MandatoryInstallStrategy
@@ -99,8 +100,9 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         }
     }
 
-    override fun showDebugScreen(promise: Promise) = runtime.invoke(promise) {
-        runtime.showDebugScreen()
+    /** Opens the shared core's debug screen over the app's activity. */
+    override fun showDebugScreen(promise: Promise) = runtime.invoke(promise) { core ->
+        DebugScreen.show(reactApplicationContext.currentActivity ?: reactApplicationContext, core)
         null
     }
 

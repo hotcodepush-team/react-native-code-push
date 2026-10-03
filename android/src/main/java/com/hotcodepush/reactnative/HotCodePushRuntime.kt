@@ -123,11 +123,6 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
         }
     }
 
-    /** The debug screen arrives with the pinned core; until then the call resolves and shows nothing. */
-    fun showDebugScreen() {
-        Log.i(TAG, "The debug screen is not available yet.")
-    }
-
     @Synchronized
     fun takeRetainedRolledBackEvent(): JSONObject? = retainedRolledBackEvent.also { retainedRolledBackEvent = null }
 
