@@ -1,0 +1,86 @@
+// The embed step of the Android build. The app's build.gradle applies this file with the one line `hotcodepush init`
+// adds; for every variant React Native bundles, the task below runs the CLI's `bundle embed` after the bundling,
+// which writes hotcodepush.json into the variant's assets and registers the binary.
+
+import javax.inject.Inject
+import org.apache.tools.ant.taskdefs.condition.Os
+
+// JitPack builds the protocol-android commit the SDK pins, until the library is on Maven Central.
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+abstract class HotCodePushEmbedTask extends DefaultTask {
+    @Input
+    abstract Property<String> getBinaryBuild()
+
+    @Input
+    abstract Property<String> getBinaryVersion()
+
+    @InputDirectory
+    abstract DirectoryProperty getJsBundleDir()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDirectory()
+
+    @Internal
+    abstract DirectoryProperty getProjectRoot()
+
+    @InputDirectory
+    abstract DirectoryProperty getResourcesDir()
+
+    @Internal
+    abstract DirectoryProperty getStagingDirectory()
+
+    @Inject
+    abstract ExecOperations getExecOperations()
+
+    @Inject
+    abstract FileSystemOperations getFileSystemOperations()
+
+    @TaskAction
+    void embed() {
+        // The embedded bundle as one tree, laid out as an uploaded bundle is: the JavaScript beside its drawable directories.
+        fileSystemOperations.sync {
+            it.from(jsBundleDir)
+            it.from(resourcesDir)
+            it.into(stagingDirectory)
+        }
+        def npx = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c', 'npx'] : ['npx']
+        execOperations.exec {
+            it.workingDir = projectRoot.get().asFile
+            it.commandLine(npx + [
+                'hotcodepush', 'bundle', 'embed',
+                '--platform', 'android',
+                '--path', stagingDirectory.get().asFile.path,
+                '--binary-version', binaryVersion.get(),
+                '--binary-build', binaryBuild.get(),
+                '--out', outputDirectory.file('hotcodepush.json').get().asFile.path,
+            ])
+        }
+    }
+}
+
+androidComponents.onVariants(androidComponents.selector().all()) { variant ->
+    def variantName = variant.name.capitalize()
+    def bundleTaskName = "createBundle${variantName}JsAndAssets"
+    // A debuggable variant is served by Metro: React Native bundles nothing for it, and nothing is embedded.
+    if (!tasks.names.contains(bundleTaskName)) {
+        return
+    }
+    def bundleTask = tasks.named(bundleTaskName)
+    def reactExtension = project.extensions.findByName('react')
+    def embedTask = tasks.register("embedHotCodePush${variantName}", HotCodePushEmbedTask) {
+        it.group = 'hotcodepush'
+        it.description = "Writes hotcodepush.json into the ${variant.name} assets and registers the binary."
+        it.binaryBuild.set(variant.outputs[0].versionCode.map { String.valueOf(it) })
+        it.binaryVersion.set(variant.outputs[0].versionName)
+        it.jsBundleDir.set(bundleTask.flatMap { it.jsBundleDir })
+        it.projectRoot.set(reactExtension == null ? rootProject.layout.projectDirectory.dir('..') : reactExtension.root)
+        it.resourcesDir.set(bundleTask.flatMap { it.resourcesDir })
+        it.stagingDirectory.set(layout.buildDirectory.dir("intermediates/hotcodepush/${variant.name}"))
+        // The resource file carries the build's time as the floor and the registration is per build: the step never counts as up to date.
+        it.outputs.upToDateWhen { false }
+    }
+    variant.sources.assets.addGeneratedSourceDirectory(embedTask) { it.outputDirectory }
+}

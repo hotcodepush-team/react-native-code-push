@@ -1,0 +1,49 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+buildscript {
+    ext.kotlin_version = rootProject.ext.has('kotlinVersion') ? rootProject.ext.kotlinVersion : '2.1.20'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.12.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
+// Codegen: the Turbo Module's spec generated from src/NativeHotCodePush.ts.
+apply plugin: 'com.facebook.react'
+
+android {
+    namespace = 'com.hotcodepush.reactnative'
+    compileSdk = rootProject.ext.has('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 36
+    defaultConfig {
+        minSdk = rootProject.ext.has('minSdkVersion') ? rootProject.ext.minSdkVersion : 24
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+// The core comes from protocol-android at a pinned commit, built by JitPack until the library is published.
+repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.facebook.react:react-android'
+    implementation 'com.github.hotcodepush-team:protocol-android:d9360e0604e013ee7a2dfc2e58e13b90ac3d5e91'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+}

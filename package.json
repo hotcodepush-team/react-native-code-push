@@ -1,0 +1,90 @@
+{
+  "name": "@hotcodepush/react-native-code-push",
+  "version": "0.0.0",
+  "description": "React Native code push by HotCodePush: the module that delivers over-the-air updates to your React Native app",
+  "license": "MIT",
+  "author": "Genz IT Solutions GmbH",
+  "homepage": "https://hotcodepush.com/react-native-code-push",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hotcodepush-team/react-native-code-push.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hotcodepush-team/react-native-code-push/issues"
+  },
+  "keywords": [
+    "react-native",
+    "code push",
+    "codepush",
+    "live updates",
+    "ota updates",
+    "over-the-air updates",
+    "hot code push"
+  ],
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "react-native": "src/index.ts",
+  "files": [
+    "android/build.gradle",
+    "android/hotcodepush.gradle",
+    "android/src/main/",
+    "dist/",
+    "ios/",
+    "scripts/",
+    "src/",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "HotcodepushReactNativeCodePush.podspec"
+  ],
+  "scripts": {
+    "build": "npm run clean && tsc --project tsconfig.build.json",
+    "clean": "rimraf ./dist",
+    "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet ios",
+    "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "codegenConfig": {
+    "name": "HotCodePushSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.hotcodepush.reactnative"
+    },
+    "ios": {
+      "modulesProvider": {
+        "HotCodePush": "HotCodePushModule"
+      }
+    }
+  },
+  "hotcodepush": {
+    "protocolIos": "de91cc84ad987552b8d9815408b90d8ac6fe09fd"
+  },
+  "dependencies": {
+    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol-js/@hotcodepush/protocol@ada56e8c8a86bc7a6fda7fa2442e5dc6cde85b44"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/react": "19.1.17",
+    "eslint": "10.11.0",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-import-x": "4.17.1",
+    "pkg-pr-new": "0.0.88",
+    "prettier": "3.9.8",
+    "react": "19.1.1",
+    "react-native": "0.82.1",
+    "rimraf": "6.1.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.70.0",
+    "vitest": "5.0.1"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": ">=0.82.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

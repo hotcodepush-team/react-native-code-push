@@ -1,0 +1,19 @@
+.DS_Store
+dist
+node_modules
+*.tgz
+
+# iOS
+.build
+.swiftpm
+DerivedData
+Pods
+Podfile.lock
+xcuserdata
+
+# Android
+android/.gradle
+android/build
+android/local.properties
+*.iml
+.idea
