@@ -103,4 +103,4 @@ The native code compiles inside an app: `ci.yml` builds the [demo app](https://g
 
 ## License
 
-See [LICENSE](./LICENSE).
+See [LICENSE](./LICENSE). An app that ships the package ships the native cores' third-party code with it: FreeBSD's bspatch under the BSD 2-clause licence on both platforms and, on Android, the decompression of bzip2 1.0.8 under the bzip2 licence. The cores' `THIRD-PARTY-NOTICES`, in [protocol-ios](https://github.com/hotcodepush-team/protocol-ios/blob/main/THIRD-PARTY-NOTICES) and in [protocol-android](https://github.com/hotcodepush-team/protocol-android/blob/main/THIRD-PARTY-NOTICES), carry the notices, and an app's distribution reproduces them: the BSD 2-clause licence requires it of a binary, the bzip2 licence appreciates the acknowledgment.
