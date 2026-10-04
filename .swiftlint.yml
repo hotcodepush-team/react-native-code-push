@@ -1,5 +1,6 @@
 included:
   - ios
+  - Tests
 disabled_rules:
   - nesting
   - todo

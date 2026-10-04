@@ -133,7 +133,9 @@ import UIKit
     }
 
     /// The first frame after the root view renders, the readiness signal `render`; every reload renders a new root.
+    /// An instance whose reload was held runs a bundle the core has switched away from, so its frame signals nothing.
     @objc private func handleContentDidAppear() {
+        guard loader?.handleContentDidAppear() ?? true else { return }
         Task { await core?.handleRendered() }
     }
 
@@ -241,11 +243,18 @@ import UIKit
     }
 
     /// Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then.
-    fileprivate func retainRolledBack(_ event: RolledBackEvent) {
+    private func retainRolledBack(_ event: RolledBackEvent) {
         let payload = try? HotCodePushRuntime.jsObject(event)
         lock.lock()
         retainedRolledBackEvent = payload
         lock.unlock()
+    }
+
+    /// A rollback: the event waits for the JavaScript of the start that follows, and the reload the core asked for
+    /// right before it is released.
+    fileprivate func handleRolledBack(_ event: RolledBackEvent) {
+        retainRolledBack(event)
+        loader?.handleRolledBack()
     }
 
     /// The kept `rolledBack` event, handed out once; `null` when no rollback preceded this start.
@@ -327,6 +336,6 @@ private final class CoreEvents: CoreListener {
     }
 
     func rolledBack(_ event: RolledBackEvent) {
-        runtime?.retainRolledBack(event)
+        runtime?.handleRolledBack(event)
     }
 }

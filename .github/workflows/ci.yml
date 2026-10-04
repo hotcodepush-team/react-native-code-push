@@ -83,7 +83,9 @@ jobs:
         with:
           node-version-file: package/.nvmrc
       - run: brew install swiftlint
-      - run: swiftlint lint --quiet --strict ios
+      - run: swiftlint lint --quiet --strict ios Tests
+        working-directory: package
+      - run: swift test
         working-directory: package
       - name: Pack the package from this commit
         working-directory: package

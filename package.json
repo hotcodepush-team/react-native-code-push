@@ -41,7 +41,7 @@
     "build": "npm run clean && tsc --project tsconfig.build.json",
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet ios",
-    "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
+    "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios Tests",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build"
