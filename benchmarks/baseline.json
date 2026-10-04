@@ -1,16 +1,16 @@
 {
   "measuredAt": "2026-10-04",
   "package": {
-    "commit": "1effb478eb99a0235564ee985780e6751d65def7"
+    "commit": "e8e3bc963a886066bad047d98d09ac3b2152c173"
   },
   "demo": {
-    "commit": "7dcec10d7fee10756ec6e5c0e92d5e4d9167984d"
+    "commit": "3ae5c526ea801186216f21edff46f118ebf5f5b6"
   },
   "android": {
     "releaseApkBytes": {
-      "with": 49738426,
+      "with": 47544434,
       "without": 46966076,
-      "added": 2772350
+      "added": 578358
     },
     "coldStartMs": {
       "with": 663,
@@ -26,9 +26,9 @@
   },
   "ios": {
     "simulatorAppBytes": {
-      "with": 40904188,
+      "with": 40913627,
       "without": 37248618,
-      "added": 3655570
+      "added": 3665009
     },
     "coldStartMs": {
       "with": 463,
