@@ -4,7 +4,7 @@
     "commit": "f58e5edf7acc8c9bb90eb70f8aae9443e405d9cf"
   },
   "demo": {
-    "commit": "3ae5c526ea801186216f21edff46f118ebf5f5b6"
+    "commit": "b9c5f8a081182ac24cc2d8797a5a298de8115f46"
   },
   "android": {
     "releaseApkBytes": {
@@ -26,9 +26,9 @@
   },
   "ios": {
     "simulatorAppBytes": {
-      "with": 40811720,
+      "with": 40812432,
       "without": 37248618,
-      "added": 3563102
+      "added": 3563814
     },
     "coldStartMs": {
       "with": 463,
