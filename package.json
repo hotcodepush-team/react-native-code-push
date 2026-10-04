@@ -60,10 +60,10 @@
     }
   },
   "hotcodepush": {
-    "protocolIos": "457635bfb1d248af8a87df374a4694f43e8253f9"
+    "protocolIos": "f16d46b73be943bba63bfcc659670f34665f89fc"
   },
   "dependencies": {
-    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol-js/@hotcodepush/protocol@ada56e8c8a86bc7a6fda7fa2442e5dc6cde85b44"
+    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol-js/@hotcodepush/protocol@29e9725d8fa89d586f702bb491f0856c65661184"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
