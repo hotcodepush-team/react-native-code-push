@@ -22,9 +22,9 @@ The cold starts are measured on builds made against a stack the CLI is logged in
 
 ## Where the bytes sit
 
-On the current baseline the Android release APK grows by about 2.8 MB.
-About 2.4 MB of it is `classes2.dex`: the package's code and the shared core's, with OkHttp 5 and Okio in place of the OkHttp 4 React Native brings, and BouncyCastle, which verifies Ed25519 on every Android version; BouncyCastle is about 2.2 MB of that in an app that does not shrink its code, as the demo does not, and about 40 KB with R8.
-About 310 KB is `libappmodules.so`, the Turbo Module's generated C++ once for each of the four ABIs the demo ships, of which an app bundle delivers one; the rest is the package's JavaScript in the bundle and the resource file.
+On the current baseline the Android release APK grows by about 580 KB.
+About 270 KB of it is `classes2.dex`, the package's code and the shared core's, with OkHttp 5 and Okio in place of the OkHttp 4 React Native brings; the core verifies signatures with Android's own API, so no cryptography library ships.
+About 310 KB of it is `libappmodules.so`, the Turbo Module's generated C++ once for each of the four ABIs the demo ships, of which an app bundle delivers one; the rest is the package's JavaScript in the bundle and the resource file.
 The simulator app grows by about 3.7 MB, nearly all of it in the `HotCodePushDemo` binary: the module and the core are linked statically, and a simulator build is a two-slice fat binary, so a device build carries about half of that; the rest is the core's privacy-manifest bundle, about 12 KB of JavaScript and the resource file.
 
 ## Running it
