@@ -11,30 +11,31 @@ What the package adds to an app, measured on the demo app and guarded from then 
 | Cold start added, Android  | from the activity's start (`ActivityTaskManager: START` in logcat) to the first paint, on the Pixel_9_Pro emulator; the median of five cold launches with the package minus the median without |
 | Cold start added, iOS      | from the launch call to the first paint, on an iPhone simulator; the same medians                                                                                                              |
 
-The first paint is the `[baseline] first paint` line both variants log on their first animation frame, read from the JavaScript console: logcat on Android, the unified log on iOS.
+The first paint is the `[baseline] first paint` line both variants log on their first animation frame, at the error level, since an iOS release build drops what the console logs below it; it is read from logcat on Android and from the unified log on iOS.
+The first launch after the install is not counted, since the system verifies and compiles the app on it.
 Both numbers come from release builds, since a debug build asks Metro for its JavaScript and the SDK stays off in it.
 The "without" variant is the demo with the package and every line `init` wired removed — the build step in Xcode and Gradle, the bundle the two apps ask the SDK for, the pinned pod — and the screen swapped for the same screen with nothing behind it.
 
-The sizes are measured with the build step unwired in the "with" variant too, `--no-binary-create`: the step needs a login, the resource file it writes weighs a few kilobytes against a binary of tens of megabytes, and the guard in CI holds no credential.
-The cold starts are measured with the build step in place, against a stack the CLI is logged in to, since an app without its resource file starts no SDK.
+The sizes are measured on builds whose build step runs offline, `HOTCODEPUSH_OFFLINE=1`, which the size script sets: `binary create` writes the resource file, creates no binary and asks no account, so the guard in CI holds no credential.
+The cold starts are measured on builds made against a stack the CLI is logged in to, since a build without a channel checks for nothing at its start.
 
 ## Where the bytes sit
 
 On the current baseline the Android release APK grows by about 578 KB.
-About 310 KB of it is `libappmodules.so`, the Turbo Module's generated C++ once for each of the four ABIs the demo ships, of which an app bundle delivers one; about 270 KB is `classes2.dex`, the package's code and the shared core's, with OkHttp 5 and Okio in place of the OkHttp 4 React Native brings; the rest is the package's JavaScript in the bundle.
-The simulator app grows by about 3.6 MB, nearly all of it in the `HotCodePushDemo` binary: the module and the core are linked statically, and a simulator build is a two-slice fat binary, so a device build carries about half of that; the rest is the core's privacy-manifest bundle and about 12 KB of JavaScript.
+About 310 KB of it is `libappmodules.so`, the Turbo Module's generated C++ once for each of the four ABIs the demo ships, of which an app bundle delivers one; about 270 KB is `classes2.dex`, the package's code and the shared core's, with OkHttp 5 and Okio in place of the OkHttp 4 React Native brings; the rest is the package's JavaScript in the bundle and the resource file.
+The simulator app grows by about 3.7 MB, nearly all of it in the `HotCodePushDemo` binary: the module and the core are linked statically, and a simulator build is a two-slice fat binary, so a device build carries about half of that; the rest is the core's privacy-manifest bundle, about 12 KB of JavaScript and the resource file.
 
 ## Running it
 
 ```sh
 npm run build && npm pack --pack-destination /tmp
-node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-react-native-code-push-0.0.0.tgz --no-binary-create
+node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-react-native-code-push-0.0.0.tgz
 node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/without without
 node benchmarks/measure-size.mjs /tmp/baseline/with
 node benchmarks/measure-size.mjs /tmp/baseline/without
 ```
 
-For the cold starts, prepare the "with" variant again without `--no-binary-create`, with `HOTCODEPUSH_TOKEN` set and `hotcodepush.json` naming an app of that account, then:
+For the cold starts, set `HOTCODEPUSH_TOKEN` and let the "with" variant's `hotcodepush.json` name an app of that account, then:
 
 ```sh
 node benchmarks/measure-cold-start.mjs /tmp/baseline/with --android emulator-5554 --ios <udid>

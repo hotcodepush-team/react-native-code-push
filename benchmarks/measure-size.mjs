@@ -11,9 +11,12 @@ if (!target) {
   process.exit(2);
 }
 
+// The build step runs offline: it writes the resource file, creates no binary and asks no account.
+const env = { ...process.env, HOTCODEPUSH_OFFLINE: '1' };
 const sizes = {};
 execFileSync('./gradlew', ['assembleRelease', '--console=plain', '-q'], {
   cwd: join(target, 'android'),
+  env,
   stdio: ['ignore', 'ignore', 'inherit'],
 });
 sizes.android = {
@@ -42,7 +45,7 @@ if (!flags.includes('--android-only')) {
       '-quiet',
       'build',
     ],
-    { stdio: ['ignore', 'ignore', 'inherit'] },
+    { env, stdio: ['ignore', 'ignore', 'inherit'] },
   );
   sizes.ios = {
     simulatorAppBytes: directorySize(

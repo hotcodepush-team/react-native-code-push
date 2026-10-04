@@ -2,16 +2,11 @@
 // Copies the demo app into a scratch directory as one of the two variants the baseline compares:
 // `with` installs the package tarball, `without` removes the package and every line `init` wired
 // and swaps the screen for the same screen with nothing behind it. Both log the first paint.
-// `--no-binary-create` unwires the build step of the `with` variant, so its release build needs no login:
-// the resource file it would write weighs nothing against the binary, and the sizes are measured without it.
 import { execFileSync } from 'node:child_process';
 import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const [source, target, variant, ...rest] = process.argv.slice(2);
-const tarball = rest.find(argument => !argument.startsWith('--'));
-const isBinaryCreateUnwired =
-  variant === 'without' || rest.includes('--no-binary-create');
+const [source, target, variant, tarball] = process.argv.slice(2);
 if (
   !source ||
   !target ||
@@ -19,7 +14,7 @@ if (
   (variant === 'with' && !tarball)
 ) {
   console.error(
-    'usage: prepare-demo.mjs <demo> <target> with <package.tgz> [--no-binary-create] | without',
+    'usage: prepare-demo.mjs <demo> <target> with <package.tgz> | without',
   );
   process.exit(2);
 }
@@ -39,17 +34,9 @@ cpSync(source, target, {
   filter: path => !excluded.has(path.split('/').pop()),
 });
 
+// At the error level: an iOS release build drops what the console logs below it.
 const firstPaintMarker =
-  "requestAnimationFrame(() => console.log('[baseline] first paint'));";
-if (isBinaryCreateUnwired) {
-  editFile('android/app/build.gradle', text =>
-    removeLines(text, 'hotcodepush.gradle'),
-  );
-  editFile(
-    'ios/HotCodePushDemo.xcodeproj/project.pbxproj',
-    removeBinaryCreatePhase,
-  );
-}
+  "requestAnimationFrame(() => console.error('[baseline] first paint'));";
 if (variant === 'with') {
   editFile('App.tsx', text =>
     text.replace(
@@ -60,6 +47,13 @@ if (variant === 'with') {
   run('npm', ['install', tarball, '--no-audit', '--no-fund']);
 } else {
   run('npm', ['uninstall', PACKAGE_NAME, '--no-audit', '--no-fund']);
+  editFile('android/app/build.gradle', text =>
+    removeLines(text, 'hotcodepush.gradle'),
+  );
+  editFile(
+    'ios/HotCodePushDemo.xcodeproj/project.pbxproj',
+    removeBinaryCreatePhase,
+  );
   editFile('ios/HotCodePushDemo/AppDelegate.swift', text =>
     removeLines(text, 'import HotcodepushReactNativeCodePush').replace(
       'HotCodePush.bundleURL()',

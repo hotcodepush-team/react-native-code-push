@@ -2,7 +2,8 @@
 // Cold-start milliseconds of a prepared demo variant: from the launch to the first paint — the
 // `[baseline] first paint` console line the demo logs on its first animation frame — median of N
 // cold launches on the Pixel_9_Pro emulator and the iPhone simulator, both on release builds, since
-// a debug build asks Metro for its JavaScript. Prints JSON with every run.
+// a debug build asks Metro for its JavaScript. The first launch after the install is not counted:
+// the system verifies and compiles the app on it. Prints JSON with every counted run.
 import { execFileSync, spawn } from 'node:child_process';
 import { join } from 'node:path';
 
@@ -41,7 +42,7 @@ async function measureAndroid() {
   });
   adb('install', '-r', apk);
   const samples = [];
-  for (let run = 0; run < runs; run++) {
+  for (let run = 0; run <= runs; run++) {
     adb('shell', 'am', 'force-stop', bundleId);
     await waitFor(() => adb('shell', 'pidof', bundleId).trim() === '');
     adb('logcat', '-c');
@@ -61,7 +62,7 @@ async function measureAndroid() {
     const painted = epochOf(lines.find(line => line.includes(marker)));
     samples.push(Math.round(painted - started));
   }
-  return summarize(samples);
+  return summarize(samples.slice(1));
 }
 
 async function measureIos() {
@@ -93,7 +94,7 @@ async function measureIos() {
     join(derivedData, `Build/Products/Release-iphonesimulator/${appName}.app`),
   );
   const samples = [];
-  for (let run = 0; run < runs; run++) {
+  for (let run = 0; run <= runs; run++) {
     simctl('terminate', iosUdid, bundleId);
     await sleep(1500);
     // React Native writes the JavaScript console to the unified log, which the stream is listening to before the launch.
@@ -110,7 +111,7 @@ async function measureIos() {
     ]);
     let paintedAt = null;
     log.stdout.on('data', chunk => {
-      if (paintedAt === null && String(chunk).includes(marker)) {
+      if (paintedAt === null && hasAppLine(String(chunk))) {
         paintedAt = Date.now();
       }
     });
@@ -122,7 +123,14 @@ async function measureIos() {
     samples.push(paintedAt - launchedAt);
   }
   simctl('terminate', iosUdid, bundleId);
-  return summarize(samples);
+  return summarize(samples.slice(1));
+}
+
+// The stream opens with a line that repeats its own predicate, the marker in it; the app's lines name the process.
+function hasAppLine(output) {
+  return output
+    .split('\n')
+    .some(line => line.includes(marker) && line.includes(`${appName}[`));
 }
 
 function summarize(samples) {
