@@ -41,6 +41,6 @@ jobs:
         working-directory: package
         run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
       - name: Prepare the demo with the package
-        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-embed
+        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-binary-create
       - name: Measure the sizes and compare them with the baseline
         run: node package/benchmarks/measure-size.mjs "$RUNNER_TEMP/with" > "$RUNNER_TEMP/sizes.json" && node package/benchmarks/guard-size.mjs package/benchmarks/baseline.json "$RUNNER_TEMP/sizes.json" >> "$GITHUB_STEP_SUMMARY"

@@ -1,6 +1,6 @@
 #!/bin/sh
-# The embed step of the Xcode build, run by the "Embed HotCodePush" phase `hotcodepush init` adds after
-# "Bundle React Native code and images": the CLI's `bundle embed` writes hotcodepush.json into the app
+# The build step of the Xcode build, run by the "Create HotCodePush binary" phase `hotcodepush init` adds after
+# "Bundle React Native code and images": the CLI's `binary create` writes hotcodepush.json into the app
 # and registers the binary. The phase holds one line; what it runs lives here.
 set -e
 
@@ -12,7 +12,7 @@ PATH="$(dirname "$NODE_BINARY"):$PATH"
 export PATH
 
 cd "$PROJECT_ROOT"
-npx hotcodepush bundle embed \
+npx hotcodepush binary create \
   --platform ios \
   --path "$DEST" \
   --binary-version "$MARKETING_VERSION" \

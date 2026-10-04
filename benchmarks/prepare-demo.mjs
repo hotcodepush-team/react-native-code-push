@@ -2,7 +2,7 @@
 // Copies the demo app into a scratch directory as one of the two variants the baseline compares:
 // `with` installs the package tarball, `without` removes the package and every line `init` wired
 // and swaps the screen for the same screen with nothing behind it. Both log the first paint.
-// `--no-embed` unwires the embed step of the `with` variant, so its release build needs no login:
+// `--no-binary-create` unwires the build step of the `with` variant, so its release build needs no login:
 // the resource file it would write weighs nothing against the binary, and the sizes are measured without it.
 import { execFileSync } from 'node:child_process';
 import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -10,7 +10,8 @@ import { join } from 'node:path';
 
 const [source, target, variant, ...rest] = process.argv.slice(2);
 const tarball = rest.find(argument => !argument.startsWith('--'));
-const isEmbedUnwired = variant === 'without' || rest.includes('--no-embed');
+const isBinaryCreateUnwired =
+  variant === 'without' || rest.includes('--no-binary-create');
 if (
   !source ||
   !target ||
@@ -18,7 +19,7 @@ if (
   (variant === 'with' && !tarball)
 ) {
   console.error(
-    'usage: prepare-demo.mjs <demo> <target> with <package.tgz> [--no-embed] | without',
+    'usage: prepare-demo.mjs <demo> <target> with <package.tgz> [--no-binary-create] | without',
   );
   process.exit(2);
 }
@@ -40,11 +41,14 @@ cpSync(source, target, {
 
 const firstPaintMarker =
   "requestAnimationFrame(() => console.log('[baseline] first paint'));";
-if (isEmbedUnwired) {
+if (isBinaryCreateUnwired) {
   editFile('android/app/build.gradle', text =>
     removeLines(text, 'hotcodepush.gradle'),
   );
-  editFile('ios/HotCodePushDemo.xcodeproj/project.pbxproj', removeEmbedPhase);
+  editFile(
+    'ios/HotCodePushDemo.xcodeproj/project.pbxproj',
+    removeBinaryCreatePhase,
+  );
 }
 if (variant === 'with') {
   editFile('App.tsx', text =>
@@ -166,15 +170,15 @@ function removeLines(text, needle) {
     .join('\n');
 }
 
-// The phase `init` added, out of the project again: its entry in the target's phases and its own object.
-function removeEmbedPhase(project) {
-  return removeLines(
-    project.replace(
-      /\t\t[0-9A-F]{24} \/\* Embed HotCodePush \*\/ = \{[\s\S]*?\n\t\t\};\n/,
-      '',
-    ),
-    '/* Embed HotCodePush */,',
+// The phase `init` added, out of the project again: found by the package's script it runs, removed with the line of the target that names it.
+function removeBinaryCreatePhase(project) {
+  const phase = project.match(
+    /\t\t([0-9A-F]{24}) \/\* [^*]+ \*\/ = \{[^}]*react-native-code-push\/scripts\/[^}]*\};\n/,
   );
+  if (phase === null) {
+    throw new Error('The Xcode project runs no script of the package.');
+  }
+  return removeLines(project.replace(phase[0], ''), `${phase[1]} /*`);
 }
 
 function run(command, args, cwd = target) {

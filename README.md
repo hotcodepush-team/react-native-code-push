@@ -33,15 +33,15 @@ On Android, `MainApplication.kt` imports the SDK's `getDefaultReactHost` in plac
 import com.hotcodepush.reactnative.HotCodePushReactHost.getDefaultReactHost
 ```
 
-The SDK reads `hotcodepush.json` from the app's resources, which the embed step writes on every native build that bundles the JavaScript. On iOS it is a Run Script phase after "Bundle React Native code and images":
+The SDK reads `hotcodepush.json` from the app's resources, which the build step, the CLI's `binary create`, writes on every native build that bundles the JavaScript. On iOS it is a Run Script phase after "Bundle React Native code and images":
 
 ```sh
 set -e
 
 WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
-HOTCODEPUSH_EMBED="$REACT_NATIVE_PATH/../@hotcodepush/react-native-code-push/scripts/embed-xcode.sh"
+HOTCODEPUSH_BINARY_CREATE="$REACT_NATIVE_PATH/../@hotcodepush/react-native-code-push/scripts/binary-create-xcode.sh"
 
-/bin/sh -c "$WITH_ENVIRONMENT $HOTCODEPUSH_EMBED"
+/bin/sh -c "$WITH_ENVIRONMENT $HOTCODEPUSH_BINARY_CREATE"
 ```
 
 On Android it is one line at the end of `android/app/build.gradle`:

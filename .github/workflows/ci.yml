@@ -13,7 +13,7 @@ env:
   JAVA_VERSION: 21
 
 # The native code compiles inside an app: the platform jobs install the package from this commit into the demo at
-# the commit the baseline names and build it. Debug builds, which bundle no JavaScript and so run no embed step.
+# the commit the baseline names and build it. Debug builds, which bundle no JavaScript, with the build step unwired.
 jobs:
   javascript:
     name: Lint, typecheck, test and build the JavaScript
@@ -56,7 +56,7 @@ jobs:
         working-directory: package
         run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
       - name: Prepare the demo with the package
-        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-embed
+        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-binary-create
       - run: ./gradlew assembleDebug --console=plain
         working-directory: ${{ runner.temp }}/with/android
   ios:
@@ -87,7 +87,7 @@ jobs:
         working-directory: package
         run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
       - name: Prepare the demo with the package
-        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-embed
+        run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)" --no-binary-create
       - run: xcodebuild -workspace HotCodePushDemo.xcworkspace -scheme HotCodePushDemo -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build
         working-directory: ${{ runner.temp }}/with/ios
   preview:

@@ -13,10 +13,10 @@ What the package adds to an app, measured on the demo app and guarded from then 
 
 The first paint is the `[baseline] first paint` line both variants log on their first animation frame, read from the JavaScript console: logcat on Android, the unified log on iOS.
 Both numbers come from release builds, since a debug build asks Metro for its JavaScript and the SDK stays off in it.
-The "without" variant is the demo with the package and every line `init` wired removed — the embed step in Xcode and Gradle, the bundle the two apps ask the SDK for, the pinned pod — and the screen swapped for the same screen with nothing behind it.
+The "without" variant is the demo with the package and every line `init` wired removed — the build step in Xcode and Gradle, the bundle the two apps ask the SDK for, the pinned pod — and the screen swapped for the same screen with nothing behind it.
 
-The sizes are measured with the embed step unwired in the "with" variant too, `--no-embed`: the step needs a login, the resource file it writes weighs a few kilobytes against a binary of tens of megabytes, and the guard in CI holds no credential.
-The cold starts are measured with the embed step in place, against a stack the CLI is logged in to, since an app without its resource file starts no SDK.
+The sizes are measured with the build step unwired in the "with" variant too, `--no-binary-create`: the step needs a login, the resource file it writes weighs a few kilobytes against a binary of tens of megabytes, and the guard in CI holds no credential.
+The cold starts are measured with the build step in place, against a stack the CLI is logged in to, since an app without its resource file starts no SDK.
 
 ## Where the bytes sit
 
@@ -28,13 +28,13 @@ The simulator app grows by about 3.6 MB, nearly all of it in the `HotCodePushDem
 
 ```sh
 npm run build && npm pack --pack-destination /tmp
-node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-react-native-code-push-0.0.0.tgz --no-embed
+node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-react-native-code-push-0.0.0.tgz --no-binary-create
 node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/without without
 node benchmarks/measure-size.mjs /tmp/baseline/with
 node benchmarks/measure-size.mjs /tmp/baseline/without
 ```
 
-For the cold starts, prepare the "with" variant again without `--no-embed`, with `HOTCODEPUSH_TOKEN` set and `hotcodepush.json` naming an app of that account, then:
+For the cold starts, prepare the "with" variant again without `--no-binary-create`, with `HOTCODEPUSH_TOKEN` set and `hotcodepush.json` naming an app of that account, then:
 
 ```sh
 node benchmarks/measure-cold-start.mjs /tmp/baseline/with --android emulator-5554 --ios <udid>

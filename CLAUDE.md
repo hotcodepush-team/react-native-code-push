@@ -13,8 +13,8 @@ When code and plan disagree, stop and surface it; never improvise.
 src/                                               NativeHotCodePush.ts (the Codegen spec), hot-code-push.ts (the API object), use-updates.ts (the hook), definitions.ts
 ios/                                               the Turbo Module (Objective-C++), the runtime and the bundle loader (Swift) over HotCodePushProtocol
 android/src/main/java/com/hotcodepush/reactnative  the Turbo Module, the runtime, the bundle loader and the React host over com.hotcodepush:protocol-android
-android/hotcodepush.gradle                         the embed task the app's build.gradle applies
-scripts/embed-xcode.sh                             the embed step the app's Xcode phase runs
+android/hotcodepush.gradle                         the task that runs binary create, applied by the app's build.gradle
+scripts/binary-create-xcode.sh                     binary create as the app's Xcode phase runs it
 benchmarks/                                        the size and cold-start baseline, measured on the demo
 ```
 
