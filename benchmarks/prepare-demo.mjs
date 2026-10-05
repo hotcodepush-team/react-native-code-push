@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Copies the demo app into a scratch directory as one of the two variants the baseline compares:
-// `with` installs the package tarball, `without` removes the package and every line `init` wired
+// `with` installs the package tarball and pins the pod at the commit the package names, so the native code
+// compiles against its own core; `without` removes the package and every line `init` wired
 // and swaps the screen for the same screen with nothing behind it. Both log the first paint.
 import { execFileSync } from 'node:child_process';
 import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -45,6 +46,18 @@ if (variant === 'with') {
     ),
   );
   run('npm', ['install', tarball, '--no-audit', '--no-fund']);
+  const installedPackage = JSON.parse(
+    readFileSync(
+      join(target, 'node_modules', PACKAGE_NAME, 'package.json'),
+      'utf8',
+    ),
+  );
+  editFile('ios/Podfile', text =>
+    text.replace(
+      /(pod 'HotCodePushProtocol',.*:commit => ')[0-9a-f]+'/,
+      `$1${installedPackage.hotcodepush.protocolIos}'`,
+    ),
+  );
 } else {
   run('npm', ['uninstall', PACKAGE_NAME, '--no-audit', '--no-fund']);
   editFile('android/app/build.gradle', text =>
