@@ -22,7 +22,7 @@ import UIKit
 
     private enum Method: String {
         case applyUpdate, checkForUpdate, clearUpdates, consumeRolledBack, downloadUpdate, getChannel, getDevice, getState
-        case notifyReady, rollback, setAttributes, setChannel, setRestartAllowed, showDebugScreen, sync
+        case notifyReady, rollbackUpdate, setAttributes, setChannel, setRestartAllowed, showDebugScreen, sync
     }
 
     private let lock = NSLock()
@@ -168,8 +168,8 @@ import UIKit
             return try HotCodePushRuntime.jsObject(await core.getState())
         case .notifyReady:
             return try HotCodePushRuntime.jsObject(await core.notifyReady())
-        case .rollback:
-            try await core.rollback(detail: options["reason"] as? String)
+        case .rollbackUpdate:
+            try await core.rollbackUpdate(detail: options["reason"] as? String)
         case .setAttributes:
             try await core.setAttributes(try HotCodePushRuntime.attributeChanges(from: options))
         case .setChannel:

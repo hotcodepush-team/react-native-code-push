@@ -61,7 +61,7 @@ export const HotCodePush: HotCodePushApi = {
     subscriptions.clear();
     rolledBackListeners.clear();
   },
-  rollback: options => NativeHotCodePush.rollback(options ?? {}),
+  rollbackUpdate: options => NativeHotCodePush.rollbackUpdate(options ?? {}),
   setAttributes: options => NativeHotCodePush.setAttributes(options),
   setChannel: options => NativeHotCodePush.setChannel(options ?? {}),
   setRestartAllowed: options => NativeHotCodePush.setRestartAllowed(options),

@@ -85,9 +85,11 @@
   [self invoke:@"notifyReady" options:@{} resolve:resolve reject:reject];
 }
 
-- (void)rollback:(NSDictionary *)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
+- (void)rollbackUpdate:(NSDictionary *)options
+               resolve:(RCTPromiseResolveBlock)resolve
+                reject:(RCTPromiseRejectBlock)reject
 {
-  [self invoke:@"rollback" options:options resolve:resolve reject:reject];
+  [self invoke:@"rollbackUpdate" options:options resolve:resolve reject:reject];
 }
 
 - (void)setAttributes:(NSDictionary *)options

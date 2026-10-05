@@ -52,10 +52,10 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
 
     override fun notifyReady(promise: Promise) = runtime.invoke(promise) { it.notifyReady().toJson() }
 
-    override fun rollback(options: ReadableMap, promise: Promise) {
+    override fun rollbackUpdate(options: ReadableMap, promise: Promise) {
         val reason = options.getStringOrNull("reason")
         runtime.invoke(promise) {
-            it.rollback(reason)
+            it.rollbackUpdate(reason)
             null
         }
     }

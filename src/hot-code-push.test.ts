@@ -7,7 +7,7 @@ vi.mock('./NativeHotCodePush', () => ({
   default: {
     consumeRolledBack: vi.fn(),
     onUpdateAvailable: vi.fn(),
-    rollback: vi.fn(),
+    rollbackUpdate: vi.fn(),
     setChannel: vi.fn(),
     sync: vi.fn(),
   },
@@ -155,6 +155,22 @@ describe('HotCodePush', () => {
       await HotCodePush.sync();
 
       expect(NativeHotCodePush.sync).toHaveBeenCalledWith({});
+    });
+  });
+
+  describe('rollbackUpdate', () => {
+    it('should pass the reason to the native rollbackUpdate', async () => {
+      await HotCodePush.rollbackUpdate({ reason: 'the checkout crashed' });
+
+      expect(NativeHotCodePush.rollbackUpdate).toHaveBeenCalledWith({
+        reason: 'the checkout crashed',
+      });
+    });
+
+    it('should pass an empty object when called without options', async () => {
+      await HotCodePush.rollbackUpdate();
+
+      expect(NativeHotCodePush.rollbackUpdate).toHaveBeenCalledWith({});
     });
   });
 

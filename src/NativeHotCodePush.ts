@@ -16,7 +16,7 @@ export interface Spec extends TurboModule {
   getDevice(): Promise<CodegenTypes.UnsafeObject>;
   getState(): Promise<CodegenTypes.UnsafeObject>;
   notifyReady(): Promise<CodegenTypes.UnsafeObject>;
-  rollback(options: CodegenTypes.UnsafeObject): Promise<void>;
+  rollbackUpdate(options: CodegenTypes.UnsafeObject): Promise<void>;
   setAttributes(options: CodegenTypes.UnsafeObject): Promise<void>;
   setChannel(options: CodegenTypes.UnsafeObject): Promise<void>;
   setRestartAllowed(options: CodegenTypes.UnsafeObject): Promise<void>;
