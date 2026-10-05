@@ -103,8 +103,9 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
         })
     }
 
+    // The getter called as a method: ReactRoot is Java until React Native 0.82 and Kotlin from 0.83, which has no property for it.
     private fun containsRenderedReactRoot(view: View): Boolean = when (view) {
-        is ReactRoot -> view.rootViewGroup.childCount > 0
+        is ReactRoot -> view.getRootViewGroup().childCount > 0
         is ViewGroup -> (0 until view.childCount).any { containsRenderedReactRoot(view.getChildAt(it)) }
         else -> false
     }
