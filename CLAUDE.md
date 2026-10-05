@@ -11,8 +11,7 @@ When code and plan disagree, stop and surface it; never improvise.
 
 ```
 src/                                               NativeHotCodePush.ts (the Codegen spec), hot-code-push.ts (the API object), use-updates.ts (the hook), definitions.ts
-ios/                                               the Turbo Module (Objective-C++), the runtime, the bundle loader and its reload gate (Swift) over HotCodePushProtocol
-Package.swift, Tests/                              the Swift package that compiles ios/ReloadGate.swift on its own, and the gate's XCTest; neither ships in the npm package
+ios/                                               the Turbo Module (Objective-C++), the runtime and the bundle loader (Swift) over HotCodePushProtocol
 android/src/main/java/com/hotcodepush/reactnative  the Turbo Module, the runtime, the bundle loader and the React host over com.hotcodepush:protocol-android
 android/hotcodepush.gradle                         the task that runs binary create, applied by the app's build.gradle
 scripts/binary-create-xcode.sh                     binary create as the app's Xcode phase runs it
@@ -27,7 +26,7 @@ This package keeps what is React Native's: which bundle the host loads, the relo
 - **The host asks for its bundle.** React Native fixes the JavaScript it loads when its host is created, so the app hands that question to the SDK: `HotCodePush.bundleURL()` in `AppDelegate.swift`, `HotCodePushReactHost.getDefaultReactHost` in `MainApplication.kt`. Both are asked again on every reload.
 - **The core starts on that first question**, and the host waits for it: the start's verdict — the pending switch, the rollback of a release that never became ready — is in before any JavaScript runs, so a start never loads one bundle and reloads into another.
 - **A host that never asked** runs JavaScript the SDK does not serve — Metro in a debug build, or an app that is not wired. The core then runs with `enabledInDebugBuilds` off, and every result is `SKIPPED` with `DEBUG_BUILD`.
-- **A switch is a reload of the host**, `RCTTriggerReloadCommandListeners` and `ReactHost.reload`: the JavaScript restarts, the process stays. On iOS a switch asked for before the instance's first content waits in `ReloadGate` for that content, or for the core's rollback, since a release that never renders shows none: a reload while React Native starts an instance moves its surface to the new instance, where the old start lands before the new bundle has run, and the app aborts. The frame of an instance whose reload was held is no readiness signal. Android needs no gate: `ReactHost.reload` runs on the host's single-threaded executor, where a surface's start waits for a running reload.
+- **A switch is a reload of the host**, `RCTTriggerReloadCommandListeners` and `ReactHost.reload`: the JavaScript restarts, the process stays. The cores hold every reload but a rollback until the app is up in the run, the app's own `applyUpdate()` and `clearUpdates()` included: a reload while React Native starts an instance crashes the app on iOS. The app is up once it has rendered, called `notifyReady()` or run into the readiness timeout. This package holds no reload back: the loader persists the core's choice and reloads a host that has asked for its bundle. What the cores need from it is the first render, reported on every start and after every reload, whatever `readySignal` is: `HotCodePushRuntime` calls the core's `handleRendered()` in `handleContentDidAppear` on iOS and in `observeFirstRender` on Android, which `HotCodePushReactHost` calls for every JavaScript instance.
 - **Readiness is the first frame after the root view renders**, observed natively: `RCTContentDidAppearNotification` on iOS, the first mount of each JavaScript instance that leaves a view inside a React root on Android, since React Native logs its content-appeared marker once per surface and not again after a reload, and mounts the root itself before any render. A bundle that mounts nothing never becomes ready.
 - **A bundle is laid out as React Native's own build lays it out**: `main.jsbundle` with `assets/` on iOS, `index.android.bundle` with its `drawable-*` directories on Android, under the store's `served/<bundleId>`.
 - **`rolledBack` is kept natively** until the JavaScript of the start that follows the rollback listens, and every listener of that start receives it, `useUpdates()` and the app's own alike; the other four events go to whichever module instance is alive.
@@ -35,17 +34,15 @@ This package keeps what is React Native's: which bundle the host loads, the relo
 
 ## Commands
 
-| Command             | Does                                         |
-| ------------------- | -------------------------------------------- |
-| `npm run lint`      | ESLint, Prettier and SwiftLint               |
-| `npm run typecheck` | TypeScript                                   |
-| `npm test`          | Vitest over the JavaScript                   |
-| `swift test`        | XCTest over the iOS reload gate, on the host |
-| `npm run build`     | the TypeScript into `dist/`                  |
+| Command             | Does                           |
+| ------------------- | ------------------------------ |
+| `npm run lint`      | ESLint, Prettier and SwiftLint |
+| `npm run typecheck` | TypeScript                     |
+| `npm test`          | Vitest over the JavaScript     |
+| `npm run build`     | the TypeScript into `dist/`    |
 
 Run `npm run fmt` before every commit.
-The native code has no standalone build: it compiles inside an app, and `ci.yml` builds the demo with the package from the commit.
-The one exception is the reload gate, which needs no React Native: `Package.swift` compiles it alone, and the iOS job of `ci.yml` runs `swift test` before it builds the demo.
+The native code has no standalone build: it compiles inside an app, and `ci.yml` builds the demo with the package from the commit, the demo's pod pinned at the package's own `hotcodepush.protocolIos` by `benchmarks/prepare-demo.mjs`.
 
 ## Dependencies during the build phase
 
