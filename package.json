@@ -41,7 +41,7 @@
     "build": "npm run clean && tsc --project tsconfig.build.json",
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet ios",
-    "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios Tests",
+    "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build"
@@ -60,7 +60,7 @@
     }
   },
   "hotcodepush": {
-    "protocolIos": "dd6236e8bd4b3ada72cec9858489e889c2f981f7"
+    "protocolIos": "42ceec4cd4bd1613128d0305995657c88d4d4432"
   },
   "dependencies": {
     "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol-js/@hotcodepush/protocol@9314e1494f7c983385a634d4246be291802668ef"

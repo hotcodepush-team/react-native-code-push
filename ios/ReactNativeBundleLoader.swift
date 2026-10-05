@@ -4,8 +4,7 @@ import Network
 import React
 
 /// React Native loads the JavaScript its host is handed: a bundle is laid out by path under the store's `served`
-/// directory, the host asks for the served one through `HotCodePush.bundleURL()`, and a switch is a reload of the host
-/// once the gate lets it through.
+/// directory, the host asks for the served one through `HotCodePush.bundleURL()`, and a switch is a reload of the host.
 final class ReactNativeBundleLoader: BundleLoader {
     static let bundleFileName = "main.jsbundle"
 
@@ -15,13 +14,9 @@ final class ReactNativeBundleLoader: BundleLoader {
     private let defaults = UserDefaults.standard
     private let lock = NSLock()
     private let monitor = NWPathMonitor()
-    private let reloadGate = ReloadGate {
-        DispatchQueue.main.async {
-            RCTTriggerReloadCommandListeners(ReactNativeBundleLoader.reloadReason)
-        }
-    }
     private let servedDirectory: URL
 
+    private var isHostRunning = false
     private var isMetered = false
     private var runningBundleId: String?
 
@@ -41,7 +36,7 @@ final class ReactNativeBundleLoader: BundleLoader {
     func resolveBundleURL() -> URL? {
         lock.lock()
         defer { lock.unlock() }
-        reloadGate.handleHostAsking()
+        isHostRunning = true
         runningBundleId = persistedBundleId()
         return runningBundleId.map(bundleFileURL(bundleId:)) ?? ReactNativeBundleLoader.embeddedBundleURL
     }
@@ -62,27 +57,22 @@ final class ReactNativeBundleLoader: BundleLoader {
         }
     }
 
-    /// A host that has not asked for its bundle yet reads the persisted choice when it does; a running one reloads into
-    /// it once the gate lets the reload through.
+    /// A host that has not asked for its bundle yet reads the persisted choice when it does; a running one reloads into it.
     func loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId: bundleId)
-        reloadGate.requestReload()
+        lock.lock()
+        let isReloadNeeded = isHostRunning
+        lock.unlock()
+        guard isReloadNeeded else { return }
+        DispatchQueue.main.async {
+            RCTTriggerReloadCommandListeners(ReactNativeBundleLoader.reloadReason)
+        }
     }
 
     func servedBundleId() -> String? {
         lock.lock()
         defer { lock.unlock() }
-        return reloadGate.hasHostAsked ? runningBundleId : persistedBundleId()
-    }
-
-    /// React Native showed the running instance's first content; returns whether it shows the bundle the core serves.
-    func handleContentDidAppear() -> Bool {
-        return reloadGate.handleContentDidAppear()
-    }
-
-    /// The core rolled the running release back, right after it asked for the reload.
-    func handleRolledBack() {
-        reloadGate.handleRolledBack()
+        return isHostRunning ? runningBundleId : persistedBundleId()
     }
 
     func isConnectionMetered() -> Bool {

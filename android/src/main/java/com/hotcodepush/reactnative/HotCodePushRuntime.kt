@@ -77,7 +77,8 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
 
     /**
      * A JavaScript instance was created, at the start and at every reload: the first mount that leaves a view inside a
-     * React root is the first frame after the root view renders, the readiness signal `render`. The root itself is
+     * React root is the first frame after the root view renders: the readiness signal `render`, and whatever
+     * `readySignal` is, the moment the app is up in this run, which the core's own restarts wait for. The root itself is
      * mounted before any render, so an instance that renders nothing never signals it.
      */
     @OptIn(UnstableReactNativeAPI::class)
