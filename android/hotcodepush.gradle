@@ -5,7 +5,7 @@
 import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
 
-// JitPack builds the protocol-android commit the SDK pins, until the library is on Maven Central.
+// JitPack builds the core-android commit the SDK pins, until the library is on Maven Central.
 repositories {
     maven { url 'https://jitpack.io' }
 }

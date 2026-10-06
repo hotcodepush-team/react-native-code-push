@@ -1,5 +1,5 @@
 import Foundation
-import HotCodePushProtocol
+import HotCodePushCore
 import Network
 import React
 
@@ -93,13 +93,14 @@ final class ReactNativeBundleLoader: BundleLoader {
     }
 }
 
-/// The files compiled into the binary, `main.jsbundle` and `assets/` in the app bundle, addressed by the embedded manifest's hashes.
+/// The files compiled into the binary, `main.jsbundle` and `assets/` in the app bundle, addressed by the embedded manifest's hashes;
+/// none in a build that bundled no JavaScript, whose resource file carries no manifest.
 final class AppBundleEmbeddedBundle: EmbeddedBundle {
     private let pathsBySha256: [String: String]
 
-    init(manifest: EmbeddedBundleManifest) {
+    init(manifest: EmbeddedBundleManifest?) {
         var paths: [String: String] = [:]
-        for file in manifest.files {
+        for file in manifest?.files ?? [] {
             paths[file.sha256] = file.path
         }
         pathsBySha256 = paths

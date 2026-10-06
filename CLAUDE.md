@@ -11,14 +11,14 @@ When code and plan disagree, stop and surface it; never improvise.
 
 ```
 src/                                               NativeHotCodePush.ts (the Codegen spec), hot-code-push.ts (the API object), use-updates.ts (the hook), definitions.ts
-ios/                                               the Turbo Module (Objective-C++), the runtime and the bundle loader (Swift) over HotCodePushProtocol
-android/src/main/java/com/hotcodepush/reactnative  the Turbo Module, the runtime, the bundle loader and the React host over com.hotcodepush:protocol-android
+ios/                                               the Turbo Module (Objective-C++), the runtime and the bundle loader (Swift) over HotCodePushCore
+android/src/main/java/com/hotcodepush/reactnative  the Turbo Module, the runtime, the bundle loader and the React host over com.hotcodepush:core-android
 android/hotcodepush.gradle                         the task that runs binary create, applied by the app's build.gradle
 scripts/binary-create-xcode.sh                     binary create as the app's Xcode phase runs it
 benchmarks/                                        the size and cold-start baseline, measured on the demo
 ```
 
-The native cores live in `protocol-ios` and `protocol-android`, consumed at pinned commits: the pod through the app's Podfile by `:git` and `:commit`, the commit named in `package.json` under `hotcodepush.protocolIos`, and the Android library through JitPack by commit in `android/build.gradle`; a core change lands there first and arrives here as a bump of both pins.
+The native cores live in `core-ios` and `core-android`, consumed at pinned commits: the pod through the app's Podfile by `:git` and `:commit`, the commit named in `package.json` under `hotcodepush.coreIos`, and the Android library through JitPack by commit in `android/build.gradle`; a core change lands there first and arrives here as a bump of both pins.
 This package keeps what is React Native's: which bundle the host loads, the reload, the readiness signal and the bridge. Nothing of the protocol lives here.
 
 ## How the SDK meets React Native
@@ -42,7 +42,7 @@ This package keeps what is React Native's: which bundle the host loads, the relo
 | `npm run build`     | the TypeScript into `dist/`    |
 
 Run `npm run fmt` before every commit.
-The native code has no standalone build: it compiles inside an app, and `ci.yml` builds the demo with the package from the commit, the demo's pod pinned at the package's own `hotcodepush.protocolIos` by `benchmarks/prepare-demo.mjs`.
+The native code has no standalone build: it compiles inside an app, and `ci.yml` builds the demo with the package from the commit, the demo's pod pinned at the package's own `hotcodepush.coreIos` by `benchmarks/prepare-demo.mjs`.
 
 ## Dependencies during the build phase
 

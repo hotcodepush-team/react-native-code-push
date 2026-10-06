@@ -21,6 +21,8 @@ if (
 }
 
 const PACKAGE_NAME = '@hotcodepush/react-native-code-push';
+// The core's pod in the demo's Podfile, pinned by `:git` and `:commit` until it is published.
+const CORE_POD_LINE = /^( *)pod 'HotCodePush\w+', :git => .*\n/m;
 const excluded = new Set([
   '.git',
   '.gradle',
@@ -54,8 +56,8 @@ if (variant === 'with') {
   );
   editFile('ios/Podfile', text =>
     text.replace(
-      /(pod 'HotCodePushProtocol',.*:commit => ')[0-9a-f]+'/,
-      `$1${installedPackage.hotcodepush.protocolIos}'`,
+      CORE_POD_LINE,
+      `$1pod 'HotCodePushCore', :git => 'https://github.com/hotcodepush-team/core-ios.git', :commit => '${installedPackage.hotcodepush.coreIos}'\n`,
     ),
   );
 } else {
@@ -81,9 +83,7 @@ if (variant === 'with') {
         'com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost',
       ),
   );
-  editFile('ios/Podfile', text =>
-    removeLines(text, "pod 'HotCodePushProtocol'"),
-  );
+  editFile('ios/Podfile', text => text.replace(CORE_POD_LINE, ''));
   writeFileSync(
     join(target, 'App.tsx'),
     `// The demo without the package: the same screen, nothing behind it — the baseline's control.

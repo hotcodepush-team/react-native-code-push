@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.private_header_files = 'ios/**/*.h'
   s.ios.deployment_target = '15.1'
   s.swift_version = '5.9'
-  s.dependency 'HotCodePushProtocol'
+  s.dependency 'HotCodePushCore'
 
   install_modules_dependencies(s)
 end

@@ -1,5 +1,5 @@
 import Foundation
-import HotCodePushProtocol
+import HotCodePushCore
 import React
 import UIKit
 

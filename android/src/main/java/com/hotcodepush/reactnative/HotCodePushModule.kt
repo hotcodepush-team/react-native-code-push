@@ -5,14 +5,14 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
-import com.hotcodepush.protocol.ChannelChoice
-import com.hotcodepush.protocol.DebugScreen
-import com.hotcodepush.protocol.DownloadStrategy
-import com.hotcodepush.protocol.InstallStrategy
-import com.hotcodepush.protocol.MandatoryInstallStrategy
-import com.hotcodepush.protocol.PlainException
-import com.hotcodepush.protocol.SyncOptions
-import com.hotcodepush.protocol.SyncTrigger
+import com.hotcodepush.core.ChannelChoice
+import com.hotcodepush.core.DebugScreen
+import com.hotcodepush.core.DownloadStrategy
+import com.hotcodepush.core.InstallStrategy
+import com.hotcodepush.core.MandatoryInstallStrategy
+import com.hotcodepush.core.PlainException
+import com.hotcodepush.core.SyncOptions
+import com.hotcodepush.core.SyncTrigger
 import org.json.JSONObject
 
 /** The Turbo Module `HotCodePush`: the JavaScript surface over [HotCodePushRuntime]. */

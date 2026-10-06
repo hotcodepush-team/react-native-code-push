@@ -35,7 +35,7 @@ kotlin {
     }
 }
 
-// The core comes from protocol-android at a pinned commit, built by JitPack until the library is published.
+// The core comes from core-android at a pinned commit, built by JitPack until the library is published.
 repositories {
     google()
     mavenCentral()
@@ -44,6 +44,6 @@ repositories {
 
 dependencies {
     implementation 'com.facebook.react:react-android'
-    implementation 'com.github.hotcodepush-team:protocol-android:e240ea1c49df64c06518cfaef0433df79a10b1fe'
+    implementation 'com.github.hotcodepush-team:core-android:900f0edd2ffdb1d0471147779ba06c2828369261'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
 }

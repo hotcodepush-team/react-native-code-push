@@ -2,11 +2,11 @@ package com.hotcodepush.reactnative
 
 import android.content.Context
 import android.net.ConnectivityManager
-import com.hotcodepush.protocol.BundleLoader
-import com.hotcodepush.protocol.EmbeddedBundle
-import com.hotcodepush.protocol.EmbeddedBundleManifest
-import com.hotcodepush.protocol.Hashing
-import com.hotcodepush.protocol.PlainException
+import com.hotcodepush.core.BundleLoader
+import com.hotcodepush.core.EmbeddedBundle
+import com.hotcodepush.core.EmbeddedBundleManifest
+import com.hotcodepush.core.Hashing
+import com.hotcodepush.core.PlainException
 import java.io.File
 import java.io.InputStream
 
@@ -67,9 +67,10 @@ class ReactNativeBundleLoader(private val context: Context, storeDirectory: File
 /**
  * The files compiled into the APK, addressed by the embedded manifest's hashes: the JavaScript among the assets,
  * the images among the resources. The build may recompress an image, so a resource counts only when its bytes still hash to the manifest's value.
+ * None in a build that bundled no JavaScript, whose resource file carries no manifest.
  */
-class ApkEmbeddedBundle(private val context: Context, manifest: EmbeddedBundleManifest) : EmbeddedBundle {
-    private val pathsBySha256 = manifest.files.associate { it.sha256 to it.path }
+class ApkEmbeddedBundle(private val context: Context, manifest: EmbeddedBundleManifest?) : EmbeddedBundle {
+    private val pathsBySha256 = manifest?.files.orEmpty().associate { it.sha256 to it.path }
 
     override fun has(sha256: String): Boolean = open(sha256)?.use { true } ?: false
 
