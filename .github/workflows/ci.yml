@@ -145,12 +145,6 @@ jobs:
       - name: Drop the iOS project, whose pod install needs macOS
         if: matrix.platform == 'android'
         run: rm -rf app/ios
-      # The CLI the demo pins reads the iOS core's commit under the key's old name: until the demo pins one that reads
-      # hotcodepush.coreIos, it wires the app with the Podfile set aside, and the core's pod is pinned below at this
-      # package's commit, as prepare-demo.mjs pins the demo's.
-      - name: Set the Podfile aside from the CLI the demo pins
-        if: matrix.platform == 'ios'
-        run: mv app/ios/Podfile "$RUNNER_TEMP/Podfile"
       # init signs in before it configures and wires, which a pipeline cannot: the demo's hotcodepush.json stands in
       # for its configuration step, and its hook step is the CLI's own wiring module, called as init --yes calls it.
       - name: Configure and wire the app as init does
@@ -164,14 +158,6 @@ jobs:
             const wiring = await reactNativeFramework.resolveWiring(project, { yes: true });
             console.log((await wiring.wireBinaryCreateStep(undefined)).message);
           "
-      - name: Pin the core's pod at the package's hotcodepush.coreIos and install the pods
-        if: matrix.platform == 'ios'
-        working-directory: app/ios
-        run: |
-          commit=$(node -p "require('../node_modules/@hotcodepush/react-native-code-push/package.json').hotcodepush.coreIos")
-          awk -v pod="  pod 'HotCodePushCore', :git => 'https://github.com/hotcodepush-team/core-ios.git', :commit => '$commit'" \
-            '{ print } /use_native_modules!/ { print pod }' "$RUNNER_TEMP/Podfile" > Podfile
-          pod install
       - name: Build the Android release and check the build step wrote hotcodepush.json
         if: matrix.platform == 'android'
         working-directory: app/android
