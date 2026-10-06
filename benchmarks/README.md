@@ -24,10 +24,10 @@ The cold starts are measured on builds made against a stack the CLI is logged in
 
 On the current baseline the Android release APK grows by about 760 KB.
 About 310 KB of it is `libappmodules.so`, the Turbo Module's generated C++ once for each of the four ABIs the demo ships, of which an app bundle delivers one.
-About 180 KB of it is `libhotcodepush_bspatch.so`, the core's native library that applies a delta pack's patches, FreeBSD's bspatch and the decompression of bzip2 1.0.8, once for each of the same four ABIs, of which an app bundle delivers one: 133 KB of files, and the padding that aligns each to a 16 KB page, since the APK stores them uncompressed.
-The rest is in the two dex files, the package's JavaScript in the bundle and the resource file.
+About 150 KB of it is `libhotcodepush_bspatch.so`, the core's native library that applies a delta pack's patches, FreeBSD's bspatch and the decompression of bzip2 1.0.8, once for each of the same four ABIs, of which an app bundle delivers one: 133 KB of files, and the padding that aligns each to a 16 KB page, since the APK stores them uncompressed.
+The rest is in the two dex files, the package's JavaScript in the bundle, the resource file and OkHttp 5's public suffix list, which replaces the compressed one OkHttp 4 carried.
 The package's code and the shared core's sit in `classes.dex`; `classes2.dex` is mostly OkHttp 5 and Okio, which take the place of the OkHttp 4 React Native brings, and is byte for byte what it was before the cores gained bspatch; the core verifies signatures with Android's own API, so no cryptography library ships.
-The simulator app grows by about 3.6 MB, nearly all of it in the `HotCodePushDemo` binary: the module and the core are linked statically, and a simulator build is a two-slice fat binary, so a device build carries about half of that; the rest is the core's privacy-manifest bundle, about 12 KB of JavaScript and the resource file.
+The simulator app grows by about 3.5 MB, nearly all of it in the `HotCodePushDemo` binary: the module and the core are linked statically, and a simulator build is a two-slice fat binary, so a device build carries about half of that; the rest is the core's privacy-manifest bundle, about 12 KB of JavaScript and the resource file.
 
 ## Running it
 
