@@ -63,7 +63,7 @@
     "protocolIos": "d2d70f1fc4ecade23506af946caa514f2f287a72"
   },
   "dependencies": {
-    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol-js/@hotcodepush/protocol@cf8846d0a5a3ff3ccae5506778c54027084f9e9b"
+    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@1a95234cadc481c94f08849883e0e879fa975965"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
