@@ -1,9 +1,11 @@
 // The build step of the Android build. The app's build.gradle applies this file with the one line `hotcodepush init`
-// adds; for every variant React Native bundles, the task below runs the CLI's `binary create` after the bundling,
-// which writes hotcodepush.json into the variant's assets and registers the binary.
+// adds; for every variant, the task below runs the CLI's `binary create` after React Native's bundling, which writes
+// hotcodepush.json into the variant's assets and registers the binary. A variant React Native bundles nothing for gets
+// the file without an embedded bundle, and no binary.
 
 import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.api.tasks.Optional
 
 // JitPack builds the core-android commit the SDK pins, until the library is on Maven Central.
 repositories {
@@ -18,6 +20,7 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
     abstract Property<String> getBinaryVersion()
 
     @InputDirectory
+    @Optional
     abstract DirectoryProperty getJsBundleDir()
 
     @OutputDirectory
@@ -27,6 +30,7 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
     abstract DirectoryProperty getProjectRoot()
 
     @InputDirectory
+    @Optional
     abstract DirectoryProperty getResourcesDir()
 
     @Internal
@@ -41,11 +45,13 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
     @TaskAction
     void createBinary() {
         // The embedded bundle as one tree, laid out as an uploaded bundle is: the JavaScript beside its drawable directories.
+        // Without a bundle the tree stays empty, which binary create reads as a build without an embedded bundle.
         fileSystemOperations.sync {
-            it.from(jsBundleDir)
-            it.from(resourcesDir)
+            if (jsBundleDir.present) it.from(jsBundleDir)
+            if (resourcesDir.present) it.from(resourcesDir)
             it.into(stagingDirectory)
         }
+        stagingDirectory.get().asFile.mkdirs()
         def npx = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c', 'npx'] : ['npx']
         execOperations.exec {
             it.workingDir = projectRoot.get().asFile
@@ -64,20 +70,19 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
 androidComponents.onVariants(androidComponents.selector().all()) { variant ->
     def variantName = variant.name.capitalize()
     def bundleTaskName = "createBundle${variantName}JsAndAssets"
-    // A debuggable variant is served by Metro: React Native bundles nothing for it, and no binary is created.
-    if (!tasks.names.contains(bundleTaskName)) {
-        return
-    }
-    def bundleTask = tasks.named(bundleTaskName)
+    // A debuggable variant is served by Metro: React Native bundles nothing for it.
+    def bundleTask = tasks.names.contains(bundleTaskName) ? tasks.named(bundleTaskName) : null
     def reactExtension = project.extensions.findByName('react')
     def binaryCreateTask = tasks.register("createHotCodePushBinary${variantName}", HotCodePushBinaryCreateTask) {
         it.group = 'hotcodepush'
-        it.description = "Writes hotcodepush.json into the ${variant.name} assets and registers the binary."
+        it.description = "Writes hotcodepush.json into the ${variant.name} assets and registers the binary of a bundled build."
         it.binaryBuild.set(variant.outputs[0].versionCode.map { String.valueOf(it) })
         it.binaryVersion.set(variant.outputs[0].versionName)
-        it.jsBundleDir.set(bundleTask.flatMap { it.jsBundleDir })
+        if (bundleTask != null) {
+            it.jsBundleDir.set(bundleTask.flatMap { it.jsBundleDir })
+            it.resourcesDir.set(bundleTask.flatMap { it.resourcesDir })
+        }
         it.projectRoot.set(reactExtension == null ? rootProject.layout.projectDirectory.dir('..') : reactExtension.root)
-        it.resourcesDir.set(bundleTask.flatMap { it.resourcesDir })
         it.stagingDirectory.set(layout.buildDirectory.dir("intermediates/hotcodepush/${variant.name}"))
         // The resource file carries the build's time as the floor and the registration is per build: the step never counts as up to date.
         it.outputs.upToDateWhen { false }
