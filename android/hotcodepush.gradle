@@ -7,9 +7,9 @@ import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.tasks.Optional
 
-// JitPack builds the core-android commit the SDK pins, until the library is on Maven Central.
+// core-android's maven branch publishes the commit the SDK pins, until the library is on Maven Central.
 repositories {
-    maven { url 'https://jitpack.io' }
+    maven { url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/' }
 }
 
 abstract class HotCodePushBinaryCreateTask extends DefaultTask {

@@ -56,7 +56,7 @@ The native cores are the pod `HotCodePushCore` and the Android library `com.hotc
 pod 'HotCodePushCore', :git => 'https://github.com/hotcodepush-team/core-ios.git', :commit => '<sha>'
 ```
 
-On Android the Gradle file above adds JitPack, which builds the pinned commit, to the app's repositories.
+On Android the Gradle file above adds core-android's `maven` branch, where the pinned commit is published, to the app's repositories.
 
 A debug build asks Metro for its JavaScript, so live updates are off there and every result says `SKIPPED` with `DEBUG_BUILD`; a debug build on the simulator bundles nothing and carries no `hotcodepush.json` at all. Try an update in a release build.
 

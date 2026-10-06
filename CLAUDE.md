@@ -18,7 +18,7 @@ scripts/binary-create-xcode.sh                     binary create as the app's Xc
 benchmarks/                                        the size and cold-start baseline, measured on the demo
 ```
 
-The native cores live in `core-ios` and `core-android`, consumed at pinned commits: the pod through the app's Podfile by `:git` and `:commit`, the commit named in `package.json` under `hotcodepush.coreIos`, and the Android library through JitPack by commit in `android/build.gradle`; a core change lands there first and arrives here as a bump of both pins.
+The native cores live in `core-ios` and `core-android`, consumed at pinned commits: the pod through the app's Podfile by `:git` and `:commit`, the commit named in `package.json` under `hotcodepush.coreIos`, and the Android library from core-android's `maven` branch by full sha in `android/build.gradle`; a core change lands there first and arrives here as a bump of both pins.
 This package keeps what is React Native's: which bundle the host loads, the reload, the readiness signal and the bridge. Nothing of the protocol lives here.
 
 ## How the SDK meets React Native

@@ -35,15 +35,15 @@ kotlin {
     }
 }
 
-// The core comes from core-android at a pinned commit, built by JitPack until the library is published.
+// The core comes from core-android's maven branch at a pinned commit until the library is on Maven Central.
 repositories {
     google()
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/' }
 }
 
 dependencies {
     implementation 'com.facebook.react:react-android'
-    implementation 'com.github.hotcodepush-team:core-android:900f0edd2ffdb1d0471147779ba06c2828369261'
+    implementation 'com.hotcodepush:core-android:31be61880906c762ff8e61cf6bd038187f9dcc51'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
 }
