@@ -10,12 +10,14 @@ permissions:
   contents: read
 
 env:
-  # The demo's build step asks no API: these builds are never shipped.
+  # The build step asks no API: these builds are never shipped.
   HOTCODEPUSH_OFFLINE: '1'
   JAVA_VERSION: 21
 
 # The native code compiles inside an app: the platform jobs install the package from this commit into the demo at
 # the commit the baseline names and build it. Debug builds, which bundle no JavaScript and so create no binary.
+# The newest-react-native jobs install it into a fresh app on React Native's latest release instead and build a release,
+# which runs the build step.
 jobs:
   javascript:
     name: Lint, typecheck, test and build the JavaScript
@@ -92,6 +94,82 @@ jobs:
         run: node package/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz)"
       - run: xcodebuild -workspace HotCodePushDemo.xcworkspace -scheme HotCodePushDemo -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build
         working-directory: ${{ runner.temp }}/with/ios
+  newest-react-native:
+    name: Build a release of a fresh app on the newest React Native for ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            runner: ubuntu-latest
+          - platform: ios
+            runner: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: package
+      - name: Read the pinned demo commit
+        id: baseline
+        run: echo "demo=$(node -p "require('./package/benchmarks/baseline.json').demo.commit")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: hotcodepush-team/react-native-code-push-demo
+          ref: ${{ steps.baseline.outputs.demo }}
+          path: demo
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        if: matrix.platform == 'ios'
+        with:
+          xcode-version: latest-stable
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package/.nvmrc
+      - uses: actions/setup-java@v5
+        if: matrix.platform == 'android'
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+        if: matrix.platform == 'android'
+      - name: Pack the package from this commit
+        working-directory: package
+        run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
+      - name: Create a fresh app on the newest React Native
+        run: |
+          version=$(npm view react-native@latest version)
+          echo "::notice::React Native $version"
+          npx @react-native-community/cli@latest init LatestApp --version "$version" --directory app --skip-install --skip-git-init
+      - name: Install the package from this commit and the CLI the demo pins
+        working-directory: app
+        run: npm install "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz "$(node -p "require('../demo/package.json').devDependencies.hotcodepush")"
+      - name: Drop the iOS project, whose pod install needs macOS
+        if: matrix.platform == 'android'
+        run: rm -rf app/ios
+      # init signs in before it configures and wires, which a pipeline cannot: the demo's hotcodepush.json stands in
+      # for its configuration step, and its hook step is the CLI's own wiring module, called as init --yes calls it.
+      - name: Configure and wire the app as init does
+        working-directory: app
+        run: |
+          cp ../demo/hotcodepush.json .
+          node --input-type=module --eval "
+            import { readFileSync } from 'node:fs';
+            import { reactNativeFramework } from 'hotcodepush/dist/utils/frameworks/react-native.js';
+            const project = { directoryPath: process.cwd(), packageJson: JSON.parse(readFileSync('package.json', 'utf8')) };
+            const wiring = await reactNativeFramework.resolveWiring(project, { yes: true });
+            console.log((await wiring.wireBinaryCreateStep(undefined)).message);
+          "
+      - name: Build the Android release and check the build step wrote hotcodepush.json
+        if: matrix.platform == 'android'
+        working-directory: app/android
+        run: |
+          ./gradlew assembleRelease --console=plain
+          unzip -l app/build/outputs/apk/release/app-release.apk assets/hotcodepush.json
+      - name: Build the iOS release and check the build step wrote hotcodepush.json
+        if: matrix.platform == 'ios'
+        working-directory: app/ios
+        run: |
+          xcodebuild -workspace LatestApp.xcworkspace -scheme LatestApp -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO -quiet build
+          ls -l DerivedData/Build/Products/Release-iphonesimulator/LatestApp.app/hotcodepush.json
   preview:
     name: Publish the preview build to pkg.pr.new
     runs-on: ubuntu-latest
