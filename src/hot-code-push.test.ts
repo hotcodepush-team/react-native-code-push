@@ -21,7 +21,7 @@ const ROLLED_BACK_EVENT: RolledBackEvent = {
     isMandatory: false,
     number: 43,
   },
-  reason: 'READY_TIMEOUT',
+  reason: 'READINESS_TIMED_OUT',
   to: null,
 };
 

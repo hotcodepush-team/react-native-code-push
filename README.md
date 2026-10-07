@@ -58,7 +58,7 @@ pod 'HotCodePushCore', :git => 'https://github.com/hotcodepush-team/core-ios.git
 
 On Android the Gradle file above adds core-android's `maven` branch, where the pinned commit is published, to the app's repositories.
 
-A debug build asks Metro for its JavaScript, so live updates are off there and every result says `SKIPPED` with `DEBUG_BUILD`; the build step runs in it too and writes a `hotcodepush.json` that names no embedded bundle, without a login. Try an update in a release build.
+A debug build asks Metro for its JavaScript, so live updates are off there and every result says `SKIPPED` with `BUILD_DEBUG`; the build step runs in it too and writes a `hotcodepush.json` that names no embedded bundle, without a login. Try an update in a release build.
 
 ## Usage
 
