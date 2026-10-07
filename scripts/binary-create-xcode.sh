@@ -7,6 +7,19 @@ set -e
 DEST="$CONFIGURATION_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
 PROJECT_ROOT="${PROJECT_ROOT:-$PROJECT_DIR/..}"
 
+# A Debug configuration runs the development server's JavaScript, and what React Native embeds for a device there is a
+# development bundle: binary create is given an empty directory instead, so it writes the resource file without an
+# embedded bundle and asks the API nothing, on a device and a simulator alike. `*Debug*` is React Native's match for DEV.
+case "$CONFIGURATION" in
+  *Debug*)
+    EMBEDDED_ASSETS_PATH="$DERIVED_FILE_DIR/hotcodepush-no-bundle"
+    mkdir -p "$EMBEDDED_ASSETS_PATH"
+    ;;
+  *)
+    EMBEDDED_ASSETS_PATH="$DEST"
+    ;;
+esac
+
 # The identity the device reports, from the built app's processed Info.plist: Expo's prebuild writes the version and
 # build into the plist as literals and leaves MARKETING_VERSION and CURRENT_PROJECT_VERSION at the template's.
 INFO_PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
@@ -20,7 +33,7 @@ export PATH
 cd "$PROJECT_ROOT"
 npx hotcodepush binary create \
   --platform ios \
-  --path "$DEST" \
+  --path "$EMBEDDED_ASSETS_PATH" \
   --binary-version "$BINARY_VERSION" \
   --binary-build "$BINARY_BUILD" \
   --out "$DEST/hotcodepush.json"

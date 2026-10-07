@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import {
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -75,6 +76,34 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
     ]);
   });
 
+  it('should pass a directory without the bundle when the configuration is Debug on a device', () => {
+    const embeddedAssetsPath = readOption(
+      runScript({ CONFIGURATION: 'Debug', PLATFORM_NAME: 'iphoneos' }),
+      '--path',
+    );
+
+    expect(embeddedAssetsPath).not.toBe(appPath);
+    expect(readdirSync(embeddedAssetsPath)).toEqual([]);
+  });
+
+  it('should pass a directory without the bundle when the configuration is Debug on a simulator', () => {
+    const embeddedAssetsPath = readOption(
+      runScript({ CONFIGURATION: 'Debug', PLATFORM_NAME: 'iphonesimulator' }),
+      '--path',
+    );
+
+    expect(embeddedAssetsPath).not.toBe(appPath);
+    expect(readdirSync(embeddedAssetsPath)).toEqual([]);
+  });
+
+  function readOption(args: string[], flag: string): string {
+    const value = args[args.indexOf(flag) + 1];
+    if (value === undefined) {
+      throw new Error(`binary create was run without ${flag}`);
+    }
+    return value;
+  }
+
   /**
    * Runs the script with the build settings Xcode gives a phase of the app target, the template's version settings
    * among them, and returns the arguments it ran binary create with.
@@ -84,6 +113,7 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
       env: {
         CONFIGURATION_BUILD_DIR: buildDirectoryPath,
         CURRENT_PROJECT_VERSION: '1',
+        DERIVED_FILE_DIR: join(buildDirectoryPath, 'DerivedSources'),
         INFOPLIST_PATH: join(APP_NAME, 'Info.plist'),
         MARKETING_VERSION: '1.0',
         NODE_BINARY: join(buildDirectoryPath, 'bin', 'node'),
