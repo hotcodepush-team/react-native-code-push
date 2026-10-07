@@ -14,5 +14,5 @@
     "target": "ES2022",
     "verbatimModuleSyntax": true
   },
-  "include": ["src"]
+  "include": ["scripts", "src"]
 }
