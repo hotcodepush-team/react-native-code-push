@@ -173,7 +173,7 @@ import UIKit
         case .setAttributes:
             try await core.setAttributes(try HotCodePushRuntime.attributeChanges(from: options))
         case .setChannel:
-            await core.setChannel(HotCodePushRuntime.channelChoice(from: options))
+            try await core.setChannel(HotCodePushRuntime.channelChoice(from: options))
         case .setRestartAllowed:
             guard let allowed = options["allowed"] as? Bool else { throw PlainError("allowed must be a boolean") }
             await core.setRestartAllowed(allowed)
