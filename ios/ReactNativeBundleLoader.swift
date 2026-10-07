@@ -6,6 +6,11 @@ import React
 /// React Native loads the JavaScript its host is handed: a bundle is laid out by path under the store's `served`
 /// directory, the host asks for the served one through `HotCodePush.bundleURL()`, and a switch is a reload of the host.
 final class ReactNativeBundleLoader: BundleLoader {
+    /// The bundle a reload the SDK asked for runs, `nil` for the embedded one.
+    struct RequestedReload {
+        let bundleId: String?
+    }
+
     static let bundleFileName = "main.jsbundle"
 
     private static let reloadReason = "HotCodePush"
@@ -18,6 +23,7 @@ final class ReactNativeBundleLoader: BundleLoader {
 
     private var isHostRunning = false
     private var isMetered = false
+    private var requestedReload: RequestedReload?
     private var runningBundleId: String?
 
     init(storeDirectory: URL) {
@@ -32,13 +38,25 @@ final class ReactNativeBundleLoader: BundleLoader {
         return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
     }
 
-    /// What the host runs from now on: the served bundle as persisted, else the embedded one. Called each time React Native starts or reloads.
-    func resolveBundleURL() -> URL? {
+    /// The host asks for its bundle, at the start and at every reload: until it is served one, the core's choice is persisted and never
+    /// reloaded into. Answers the reload the SDK asked for, `nil` at the start and for a reload the SDK did not ask for.
+    func beginBundleRequest() -> RequestedReload? {
         lock.lock()
         defer { lock.unlock() }
+        isHostRunning = false
+        let requested = requestedReload
+        requestedReload = nil
+        return requested
+    }
+
+    /// The host runs the bundle from now on, `nil` the embedded one: answers its file, none while the bundle's JavaScript is not on disk.
+    func serveBundle(bundleId: String?) -> URL? {
+        let url = bundleId.map(bundleFileURL(bundleId:)).flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
+        lock.lock()
+        defer { lock.unlock() }
+        runningBundleId = url == nil ? nil : bundleId
         isHostRunning = true
-        runningBundleId = persistedBundleId()
-        return runningBundleId.map(bundleFileURL(bundleId:)) ?? ReactNativeBundleLoader.embeddedBundleURL
+        return url
     }
 
     func projectionDirectory(bundleId: String) -> URL {
@@ -57,11 +75,14 @@ final class ReactNativeBundleLoader: BundleLoader {
         }
     }
 
-    /// A host that has not asked for its bundle yet reads the persisted choice when it does; a running one reloads into it.
+    /// A host that is not running yet is served the core's answer when it asks; a running one reloads into the bundle.
     func loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId: bundleId)
         lock.lock()
         let isReloadNeeded = isHostRunning
+        if isReloadNeeded {
+            requestedReload = RequestedReload(bundleId: bundleId)
+        }
         lock.unlock()
         guard isReloadNeeded else { return }
         DispatchQueue.main.async {

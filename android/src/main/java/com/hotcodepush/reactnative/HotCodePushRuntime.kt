@@ -1,6 +1,7 @@
 package com.hotcodepush.reactnative
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -39,8 +40,10 @@ import com.hotcodepush.core.UpdateFailedEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import java.io.File
 
@@ -57,22 +60,56 @@ interface HotCodePushEventSink {
 class HotCodePushRuntime private constructor(private val context: Context) : CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val storeDirectory = File(context.filesDir, "hotcodepush")
+    private val loader = ReactNativeBundleLoader(context, storeDirectory, ::reloadReactNative)
 
     @Volatile private var core: Core? = null
 
     @Volatile private var eventSink: HotCodePushEventSink? = null
     private var isStarted = false
-
-    @Volatile private var loader: ReactNativeBundleLoader? = null
     private var retainedRolledBackEvent: JSONObject? = null
 
     // The host
 
-    /** What React Native loads, asked at every start and reload: the served bundle's file, else the bundle the binary ships. */
+    /**
+     * What React Native loads, asked at every start and reload: the served bundle's file, else the bundle the binary ships.
+     * Nothing thrown on the way stops the host: it then runs the embedded bundle.
+     */
     fun resolveBundleLoader(embeddedBundleLoader: JSBundleLoader): JSBundleLoader {
-        start(isHostAsking = true)
-        val bundleFile = loader?.resolveBundleFile() ?: return embeddedBundleLoader
-        return JSBundleLoader.createFileLoader(bundleFile.path)
+        val bundleFile = try {
+            loader.serveBundle(resolveServedBundleId())
+        } catch (failure: Throwable) {
+            Log.e(TAG, START_FAILED_MESSAGE, failure)
+            loader.serveBundle(null)
+        }
+        return bundleFile?.let { JSBundleLoader.createFileLoader(it.path) } ?: embeddedBundleLoader
+    }
+
+    /** The bundle the new JavaScript instance runs: the start's answer, the bundle of a reload the SDK asked for, else the core's answer to the reload. */
+    private fun resolveServedBundleId(): String? {
+        val requestedReload = loader.beginBundleRequest()
+        if (claimStart()) return createCore(isServedBySdk = true)?.handleAppStartBlocking(isHeadless = isHeadlessStart())
+        val core = core ?: return null
+        return if (requestedReload != null) requestedReload.bundleId else reportReload(core)
+    }
+
+    /**
+     * A reload the SDK did not ask for — `DevSettings.reload()`, react-native-restart, a development reload — goes through the core's gate.
+     * The host waits for the answer as long as for the start's, then runs the embedded bundle until the core reloads it into its choice.
+     */
+    private fun reportReload(core: Core): String? = runBlocking {
+        val reload = scope.async { core.handleAppReload() }
+        withTimeoutOrNull((Core.START_TIMEOUT * 1000).toLong()) { reload.await() }
+    }
+
+    /**
+     * React Native asks for its bundle once an activity is on its way, which puts the process in the foreground; a process a headless
+     * JavaScript task, a data message or a background fetch started is not, and no screen renders in it.
+     */
+    private fun isHeadlessStart(): Boolean {
+        val process = ActivityManager.RunningAppProcessInfo()
+        ActivityManager.getMyMemoryState(process)
+        return process.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
     }
 
     /**
@@ -115,7 +152,7 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     /** The module of the JavaScript instance that runs now; a reload replaces it. */
     fun attach(eventSink: HotCodePushEventSink) {
         this.eventSink = eventSink
-        start(isHostAsking = false)
+        if (claimStart()) createCore(isServedBySdk = false)?.let { core -> scope.launch { core.handleAppStart() } }
     }
 
     fun detach(eventSink: HotCodePushEventSink) {
@@ -143,20 +180,14 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     // The start
 
     /**
-     * Once per process. A host that asks for its bundle waits for the core's start, which only reads and writes the
-     * device's own store; a host that never asked runs JavaScript the SDK does not serve, so the core stays off.
+     * Whether the caller starts the core, once per process: the host at its first question for its bundle, which waits for the start's
+     * answer at most `Core.START_TIMEOUT`, or the module of a host that never asked, which runs JavaScript the SDK does not serve.
      */
-    private fun start(isHostAsking: Boolean) {
-        val core = synchronized(this) {
-            if (isStarted) return
-            isStarted = true
-            createCore(isHostAsking)
-        } ?: return
-        if (isHostAsking) {
-            runBlocking { core.handleAppStart() }
-        } else {
-            scope.launch { core.handleAppStart() }
-        }
+    @Synchronized
+    private fun claimStart(): Boolean {
+        if (isStarted) return false
+        isStarted = true
+        return true
     }
 
     private fun createCore(isServedBySdk: Boolean): Core? {
@@ -167,8 +198,6 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
         }
         if (!isServedBySdk) Log.w(TAG, NOT_SERVED_MESSAGE)
         val configuration = if (isServedBySdk) readConfiguration else readConfiguration.copy(enabledInDebugBuilds = false)
-        val storeDirectory = File(context.filesDir, "hotcodepush")
-        val loader = ReactNativeBundleLoader(context, storeDirectory, ::reloadReactNative)
         val core = Core(
             configuration = configuration,
             device = deviceFacts(context, isServedBySdk),
@@ -183,7 +212,6 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
             scope = scope,
             temporaryDirectory = File(context.cacheDir, "hotcodepush"),
         )
-        this.loader = loader
         this.core = core
         observeAppLifecycle(core)
         return core
@@ -239,6 +267,7 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
         private const val NOT_CONFIGURED_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
         private const val NOT_SERVED_MESSAGE = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs HotCodePushReactHost.getDefaultReactHost in MainApplication, which `npx hotcodepush doctor` checks."
         private const val RELOAD_REASON = "HotCodePush"
+        private const val START_FAILED_MESSAGE = "HotCodePush could not answer which bundle React Native runs, so the embedded bundle runs."
         private const val TAG = "HotCodePush"
 
         @Volatile private var instance: HotCodePushRuntime? = null

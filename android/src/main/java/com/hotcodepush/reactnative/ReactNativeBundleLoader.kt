@@ -15,18 +15,33 @@ import java.io.InputStream
  * directory, the host asks for the served one through [HotCodePushReactHost], and a switch is a reload of the host.
  */
 class ReactNativeBundleLoader(private val context: Context, storeDirectory: File, private val reloadReactNative: () -> Unit) : BundleLoader {
+    /** The bundle a reload the SDK asked for runs, `null` for the embedded one. */
+    class RequestedReload(val bundleId: String?)
+
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
     private val servedDirectory = File(storeDirectory, "served")
 
     private var isHostRunning = false
+    private var requestedReload: RequestedReload? = null
     private var runningBundleId: String? = null
 
-    /** What the host runs from now on: the served bundle as persisted, else none, the embedded one. Called each time React Native starts or reloads. */
+    /**
+     * The host asks for its bundle, at the start and at every reload: until it is served one, the core's choice is persisted and
+     * never reloaded into. Answers the reload the SDK asked for, `null` at the start and for a reload the SDK did not ask for.
+     */
     @Synchronized
-    fun resolveBundleFile(): File? {
+    fun beginBundleRequest(): RequestedReload? {
+        isHostRunning = false
+        return requestedReload.also { requestedReload = null }
+    }
+
+    /** The host runs the bundle from now on, `null` the embedded one: answers its file, none while the bundle's JavaScript is not on disk. */
+    @Synchronized
+    fun serveBundle(bundleId: String?): File? {
+        val file = bundleId?.let(::bundleFile)?.takeIf { it.isFile }
+        runningBundleId = if (file == null) null else bundleId
         isHostRunning = true
-        runningBundleId = persistedBundleId()
-        return runningBundleId?.let(::bundleFile)
+        return file
     }
 
     override fun projectionDirectory(bundleId: String): File = File(servedDirectory, bundleId)
@@ -39,10 +54,14 @@ class ReactNativeBundleLoader(private val context: Context, storeDirectory: File
         preferences.edit().apply { if (bundleId == null) remove(SERVED_BUNDLE_ID_KEY) else putString(SERVED_BUNDLE_ID_KEY, bundleId) }.apply()
     }
 
-    /** A host that has not asked for its bundle yet reads the persisted choice when it does; a running one reloads into it. */
+    /** A host that is not running yet is served the core's answer when it asks; a running one reloads into the bundle. */
     override fun loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId)
-        if (synchronized(this) { isHostRunning }) reloadReactNative()
+        val isReloadNeeded = synchronized(this) {
+            if (isHostRunning) requestedReload = RequestedReload(bundleId)
+            isHostRunning
+        }
+        if (isReloadNeeded) reloadReactNative()
     }
 
     @Synchronized
