@@ -60,9 +60,11 @@
   [self invoke:@"consumeUpdateRolledBack" options:@{} resolve:resolve reject:reject];
 }
 
-- (void)downloadUpdate:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
+- (void)downloadUpdate:(NSDictionary *)options
+               resolve:(RCTPromiseResolveBlock)resolve
+                reject:(RCTPromiseRejectBlock)reject
 {
-  [self invoke:@"downloadUpdate" options:@{} resolve:resolve reject:reject];
+  [self invoke:@"downloadUpdate" options:options resolve:resolve reject:reject];
 }
 
 - (void)getChannel:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject

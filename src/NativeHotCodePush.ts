@@ -11,7 +11,9 @@ export interface Spec extends TurboModule {
   clearUpdates(): Promise<void>;
   /** The `updateRolledBack` event the native side kept for the start that follows the rollback, handed out once. */
   consumeUpdateRolledBack(): Promise<CodegenTypes.UnsafeObject>;
-  downloadUpdate(): Promise<CodegenTypes.UnsafeObject>;
+  downloadUpdate(
+    options: CodegenTypes.UnsafeObject,
+  ): Promise<CodegenTypes.UnsafeObject>;
   getChannel(): Promise<CodegenTypes.UnsafeObject>;
   getDevice(): Promise<CodegenTypes.UnsafeObject>;
   getState(): Promise<CodegenTypes.UnsafeObject>;

@@ -9,6 +9,7 @@ import com.hotcodepush.core.ApplyStrategy
 import com.hotcodepush.core.ChannelChoice
 import com.hotcodepush.core.DebugScreen
 import com.hotcodepush.core.DownloadStrategy
+import com.hotcodepush.core.DownloadUpdateOptions
 import com.hotcodepush.core.MandatoryApplyStrategy
 import com.hotcodepush.core.PlainException
 import com.hotcodepush.core.SyncOptions
@@ -42,7 +43,10 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         promise.resolve(JSONObject().put("event", runtime.takeRetainedUpdateRolledBackEvent() ?: JSONObject.NULL).toWritableMap())
     }
 
-    override fun downloadUpdate(promise: Promise) = runtime.invoke(promise) { it.downloadUpdate().toJson() }
+    override fun downloadUpdate(options: ReadableMap, promise: Promise) {
+        val downloadUpdateOptions = readOptions(promise) { downloadUpdateOptions(options) } ?: return
+        runtime.invoke(promise) { it.downloadUpdate(downloadUpdateOptions).toJson() }
+    }
 
     override fun getChannel(promise: Promise) = runtime.invoke(promise) { it.channel().toJson() }
 
@@ -107,12 +111,7 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
     }
 
     override fun sync(options: ReadableMap, promise: Promise) {
-        val syncOptions = try {
-            syncOptions(options)
-        } catch (exception: PlainException) {
-            promise.reject(REJECTION_CODE, exception.message)
-            return
-        }
+        val syncOptions = readOptions(promise) { syncOptions(options) } ?: return
         runtime.invoke(promise) { it.sync(SyncTrigger.MANUAL, syncOptions).toJson() }
     }
 
@@ -128,7 +127,21 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         }
     }
 
-    /** Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call. */
+    /** The call's options, or `null` once the call is rejected: a value outside its choices is a programming mistake. */
+    private fun <T : Any> readOptions(promise: Promise, read: () -> T): T? = try {
+        read()
+    } catch (exception: PlainException) {
+        promise.reject(REJECTION_CODE, exception.message)
+        null
+    }
+
+    /** The apply strategies for this call. */
+    private fun downloadUpdateOptions(options: ReadableMap) = DownloadUpdateOptions(
+        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
+        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
+    )
+
+    /** Each stage's strategy for this call. */
     private fun syncOptions(options: ReadableMap) = SyncOptions(
         applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
         downloadStrategy = option("downloadStrategy", options, DownloadStrategy::fromWire),

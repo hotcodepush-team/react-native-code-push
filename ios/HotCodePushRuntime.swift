@@ -188,7 +188,7 @@ import UIKit
         case .consumeUpdateRolledBack:
             return consumeUpdateRolledBack()
         case .downloadUpdate:
-            return try HotCodePushRuntime.jsObject(await core.downloadUpdate())
+            return try HotCodePushRuntime.jsObject(await core.downloadUpdate(options: try HotCodePushRuntime.downloadUpdateOptions(from: options)))
         case .getChannel:
             return try HotCodePushRuntime.jsObject(await core.channel())
         case .getDevice:
@@ -236,6 +236,13 @@ import UIKit
             return .name(name)
         }
         return nil
+    }
+
+    /// The apply strategies for this call; a value outside its choices is a programming mistake and rejects the call.
+    private static func downloadUpdateOptions(from options: [String: Any]) throws -> DownloadUpdateOptions {
+        return DownloadUpdateOptions(
+            applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
+            mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
     }
 
     /// Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call.

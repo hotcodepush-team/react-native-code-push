@@ -6,6 +6,7 @@ import type * as Sdk from './hot-code-push';
 vi.mock('./NativeHotCodePush', () => ({
   default: {
     consumeUpdateRolledBack: vi.fn(),
+    downloadUpdate: vi.fn(),
     onUpdateAvailable: vi.fn(),
     rollbackUpdate: vi.fn(),
     setChannel: vi.fn(),
@@ -114,6 +115,32 @@ describe('HotCodePush', () => {
         listener,
       );
       expect(subscription.remove).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('downloadUpdate', () => {
+    it('should pass the apply strategies to the native downloadUpdate', async () => {
+      vi.mocked(NativeHotCodePush.downloadUpdate).mockResolvedValue({
+        release: null,
+        status: 'UP_TO_DATE',
+      });
+
+      await HotCodePush.downloadUpdate({ applyStrategy: 'manual' });
+
+      expect(NativeHotCodePush.downloadUpdate).toHaveBeenCalledWith({
+        applyStrategy: 'manual',
+      });
+    });
+
+    it('should pass an empty object when called without options', async () => {
+      vi.mocked(NativeHotCodePush.downloadUpdate).mockResolvedValue({
+        release: null,
+        status: 'UP_TO_DATE',
+      });
+
+      await HotCodePush.downloadUpdate();
+
+      expect(NativeHotCodePush.downloadUpdate).toHaveBeenCalledWith({});
     });
   });
 

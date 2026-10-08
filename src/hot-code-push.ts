@@ -50,9 +50,11 @@ export const HotCodePush: HotCodePushApi = {
       NativeHotCodePush.checkForUpdate() as Promise<CheckForUpdateResult>,
     ),
   clearUpdates: () => NativeHotCodePush.clearUpdates(),
-  downloadUpdate: () =>
+  downloadUpdate: options =>
     trackCycle(
-      NativeHotCodePush.downloadUpdate() as Promise<DownloadUpdateResult>,
+      NativeHotCodePush.downloadUpdate(
+        options ?? {},
+      ) as Promise<DownloadUpdateResult>,
     ),
   getChannel: () => NativeHotCodePush.getChannel() as Promise<GetChannelResult>,
   getDevice: () => NativeHotCodePush.getDevice() as Promise<GetDeviceResult>,
