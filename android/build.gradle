@@ -44,6 +44,6 @@ repositories {
 
 dependencies {
     implementation 'com.facebook.react:react-android'
-    implementation 'com.hotcodepush:core-android:bf0de8a58843ce1dbb921fd680cc150568016f9d'
+    implementation 'com.hotcodepush:core-android:28a52e98e47db20b69bd6914538a21a5975853e6'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
 }

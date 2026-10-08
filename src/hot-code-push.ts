@@ -1,7 +1,7 @@
 import type {
-  ApplyResult,
-  CheckResult,
-  DownloadResult,
+  ApplyUpdateResult,
+  CheckForUpdateResult,
+  DownloadUpdateResult,
   GetChannelResult,
   GetDeviceResult,
   GetStateResult,
@@ -18,18 +18,18 @@ type CycleListener = (runningCycleCount: number) => void;
 /** A listener past the typed surface: `addListener` pairs each event name with its payload, the bridge carries objects. */
 type EventListener = (event: object) => void;
 
-type NativeEventName = Exclude<HotCodePushEventName, 'rolledBack'>;
+type NativeEventName = Exclude<HotCodePushEventName, 'updateRolledBack'>;
 
 type NativeSubscription = ReturnType<
   typeof NativeHotCodePush.onUpdateAvailable
 >;
 
 const cycleListeners = new Set<CycleListener>();
-const rolledBackListeners = new Set<EventListener>();
 const subscriptions = new Set<NativeSubscription>();
+const updateRolledBackListeners = new Set<EventListener>();
 
-/** The `rolledBack` event the native side kept for this start, taken from it once; undefined until a listener asks. */
-let keptRolledBackEvent: Promise<object | null> | undefined;
+/** The `updateRolledBack` event the native side kept for this start, taken from it once; undefined until a listener asks. */
+let keptUpdateRolledBackEvent: Promise<object | null> | undefined;
 let runningCycleCount = 0;
 
 /**
@@ -37,18 +37,23 @@ let runningCycleCount = 0;
  */
 export const HotCodePush: HotCodePushApi = {
   addListener: async (eventName, listener) =>
-    eventName === 'rolledBack'
-      ? addRolledBackListener(listener as EventListener)
+    eventName === 'updateRolledBack'
+      ? addUpdateRolledBackListener(listener as EventListener)
       : addNativeListener(
           eventName as NativeEventName,
           listener as EventListener,
         ),
-  applyUpdate: () => NativeHotCodePush.applyUpdate() as Promise<ApplyResult>,
+  applyUpdate: () =>
+    NativeHotCodePush.applyUpdate() as Promise<ApplyUpdateResult>,
   checkForUpdate: () =>
-    trackCycle(NativeHotCodePush.checkForUpdate() as Promise<CheckResult>),
+    trackCycle(
+      NativeHotCodePush.checkForUpdate() as Promise<CheckForUpdateResult>,
+    ),
   clearUpdates: () => NativeHotCodePush.clearUpdates(),
   downloadUpdate: () =>
-    trackCycle(NativeHotCodePush.downloadUpdate() as Promise<DownloadResult>),
+    trackCycle(
+      NativeHotCodePush.downloadUpdate() as Promise<DownloadUpdateResult>,
+    ),
   getChannel: () => NativeHotCodePush.getChannel() as Promise<GetChannelResult>,
   getDevice: () => NativeHotCodePush.getDevice() as Promise<GetDeviceResult>,
   getState: () => NativeHotCodePush.getState() as Promise<GetStateResult>,
@@ -59,7 +64,7 @@ export const HotCodePush: HotCodePushApi = {
       subscription.remove();
     }
     subscriptions.clear();
-    rolledBackListeners.clear();
+    updateRolledBackListeners.clear();
   },
   rollbackUpdate: options => NativeHotCodePush.rollbackUpdate(options ?? {}),
   setAttributes: options => NativeHotCodePush.setAttributes(options),
@@ -97,24 +102,25 @@ function addNativeListener(
 }
 
 /**
- * `rolledBack` belongs to the start that follows the rollback, before any listener exists: the native side keeps
- * the event, the first listener takes it from there, and every listener of this start receives it.
+ * `updateRolledBack` belongs to the start that follows the rollback, before any listener exists: the native side
+ * keeps the event, the first listener takes it from there, and every listener of this start receives it.
  */
-function addRolledBackListener(
+function addUpdateRolledBackListener(
   listener: EventListener,
 ): HotCodePushListenerHandle {
-  rolledBackListeners.add(listener);
-  keptRolledBackEvent ??= NativeHotCodePush.consumeRolledBack().then(
-    result => (result as { event: object | null }).event,
-  );
-  void keptRolledBackEvent.then(event => {
-    if (event !== null && rolledBackListeners.has(listener)) {
+  updateRolledBackListeners.add(listener);
+  keptUpdateRolledBackEvent ??=
+    NativeHotCodePush.consumeUpdateRolledBack().then(
+      result => (result as { event: object | null }).event,
+    );
+  void keptUpdateRolledBackEvent.then(event => {
+    if (event !== null && updateRolledBackListeners.has(listener)) {
       listener(event);
     }
   });
   return {
     remove: async () => {
-      rolledBackListeners.delete(listener);
+      updateRolledBackListeners.delete(listener);
     },
   };
 }

@@ -21,7 +21,7 @@ import UIKit
     private static let notServedMessage = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs `HotCodePush.bundleURL()` in the AppDelegate, which `npx hotcodepush doctor` checks."
 
     private enum Method: String {
-        case applyUpdate, checkForUpdate, clearUpdates, consumeRolledBack, downloadUpdate, getChannel, getDevice, getState
+        case applyUpdate, checkForUpdate, clearUpdates, consumeUpdateRolledBack, downloadUpdate, getChannel, getDevice, getState
         case notifyReady, rollbackUpdate, setAttributes, setChannel, setRestartAllowed, showDebugScreen, sync
     }
 
@@ -34,7 +34,7 @@ import UIKit
     private var isStarted = false
     /// Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it.
     private var notConfiguredMessage = HotCodePushRuntime.missingConfigurationMessage
-    private var retainedRolledBackEvent: [String: Any]?
+    private var retainedUpdateRolledBackEvent: [String: Any]?
     private weak var eventSink: HotCodePushEventSink?
 
     override private init() {
@@ -91,8 +91,8 @@ import UIKit
             reject("HotCodePush has no method named \(methodName)")
             return
         }
-        if method == .consumeRolledBack {
-            resolve(consumeRolledBack())
+        if method == .consumeUpdateRolledBack {
+            resolve(consumeUpdateRolledBack())
             return
         }
         guard let core = core else {
@@ -185,8 +185,8 @@ import UIKit
             return try HotCodePushRuntime.jsObject(await core.checkForUpdate())
         case .clearUpdates:
             await core.clearUpdates()
-        case .consumeRolledBack:
-            return consumeRolledBack()
+        case .consumeUpdateRolledBack:
+            return consumeUpdateRolledBack()
         case .downloadUpdate:
             return try HotCodePushRuntime.jsObject(await core.downloadUpdate())
         case .getChannel:
@@ -241,9 +241,9 @@ import UIKit
     /// Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call.
     private static func syncOptions(from options: [String: Any]) throws -> SyncOptions {
         return SyncOptions(
+            applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
             downloadStrategy: try option("downloadStrategy", options, DownloadStrategy.init(rawValue:)),
-            installStrategy: try option("installStrategy", options, InstallStrategy.init(rawValue:)),
-            mandatoryInstallStrategy: try option("mandatoryInstallStrategy", options, MandatoryInstallStrategy.init(rawValue:)))
+            mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
     }
 
     private static func option<T>(_ name: String, _ options: [String: Any], _ parse: (String) -> T?) throws -> T? {
@@ -271,19 +271,19 @@ import UIKit
     }
 
     /// Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then.
-    fileprivate func retainRolledBack(_ event: RolledBackEvent) {
+    fileprivate func retainUpdateRolledBack(_ event: UpdateRolledBackEvent) {
         let payload = try? HotCodePushRuntime.jsObject(event)
         lock.lock()
-        retainedRolledBackEvent = payload
+        retainedUpdateRolledBackEvent = payload
         lock.unlock()
     }
 
-    /// The kept `rolledBack` event, handed out once; `null` when no rollback preceded this start.
-    private func consumeRolledBack() -> [String: Any] {
+    /// The kept `updateRolledBack` event, handed out once; `null` when no rollback preceded this start.
+    private func consumeUpdateRolledBack() -> [String: Any] {
         lock.lock()
         defer { lock.unlock() }
-        let event: Any = retainedRolledBackEvent ?? NSNull()
-        retainedRolledBackEvent = nil
+        let event: Any = retainedUpdateRolledBackEvent ?? NSNull()
+        retainedUpdateRolledBackEvent = nil
         return ["event": event]
     }
 
@@ -379,7 +379,7 @@ private final class CoreEvents: CoreListener {
         runtime?.emitDownloadProgress(releaseId: releaseId, downloadedBytes: downloadedBytes, totalBytes: totalBytes)
     }
 
-    func rolledBack(_ event: RolledBackEvent) {
-        runtime?.retainRolledBack(event)
+    func updateRolledBack(_ event: UpdateRolledBackEvent) {
+        runtime?.retainUpdateRolledBack(event)
     }
 }

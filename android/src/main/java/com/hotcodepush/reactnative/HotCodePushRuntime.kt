@@ -31,12 +31,12 @@ import com.hotcodepush.core.DeviceFacts
 import com.hotcodepush.core.FileStore
 import com.hotcodepush.core.KeyValueStore
 import com.hotcodepush.core.OkHttpClientAdapter
-import com.hotcodepush.core.RolledBackEvent
 import com.hotcodepush.core.ScheduledTask
 import com.hotcodepush.core.Scheduler
 import com.hotcodepush.core.UpdateAvailableEvent
 import com.hotcodepush.core.UpdateDownloadedEvent
 import com.hotcodepush.core.UpdateFailedEvent
+import com.hotcodepush.core.UpdateRolledBackEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -71,7 +71,7 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
 
     /** Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it. */
     @Volatile private var notConfiguredMessage = MISSING_CONFIGURATION_MESSAGE
-    private var retainedRolledBackEvent: JSONObject? = null
+    private var retainedUpdateRolledBackEvent: JSONObject? = null
 
     // The host
 
@@ -181,7 +181,7 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     }
 
     @Synchronized
-    fun takeRetainedRolledBackEvent(): JSONObject? = retainedRolledBackEvent.also { retainedRolledBackEvent = null }
+    fun takeRetainedUpdateRolledBackEvent(): JSONObject? = retainedUpdateRolledBackEvent.also { retainedUpdateRolledBackEvent = null }
 
     // The start
 
@@ -268,8 +268,8 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
 
     /** Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then. */
     @Synchronized
-    override fun rolledBack(event: RolledBackEvent) {
-        retainedRolledBackEvent = event.toJson()
+    override fun updateRolledBack(event: UpdateRolledBackEvent) {
+        retainedUpdateRolledBackEvent = event.toJson()
     }
 
     companion object {

@@ -55,9 +55,9 @@
   [self invoke:@"clearUpdates" options:@{} resolve:resolve reject:reject];
 }
 
-- (void)consumeRolledBack:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
+- (void)consumeUpdateRolledBack:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
 {
-  [self invoke:@"consumeRolledBack" options:@{} resolve:resolve reject:reject];
+  [self invoke:@"consumeUpdateRolledBack" options:@{} resolve:resolve reject:reject];
 }
 
 - (void)downloadUpdate:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject

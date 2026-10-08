@@ -5,11 +5,11 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
+import com.hotcodepush.core.ApplyStrategy
 import com.hotcodepush.core.ChannelChoice
 import com.hotcodepush.core.DebugScreen
 import com.hotcodepush.core.DownloadStrategy
-import com.hotcodepush.core.InstallStrategy
-import com.hotcodepush.core.MandatoryInstallStrategy
+import com.hotcodepush.core.MandatoryApplyStrategy
 import com.hotcodepush.core.PlainException
 import com.hotcodepush.core.SyncOptions
 import com.hotcodepush.core.SyncTrigger
@@ -38,8 +38,8 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         null
     }
 
-    override fun consumeRolledBack(promise: Promise) {
-        promise.resolve(JSONObject().put("event", runtime.takeRetainedRolledBackEvent() ?: JSONObject.NULL).toWritableMap())
+    override fun consumeUpdateRolledBack(promise: Promise) {
+        promise.resolve(JSONObject().put("event", runtime.takeRetainedUpdateRolledBackEvent() ?: JSONObject.NULL).toWritableMap())
     }
 
     override fun downloadUpdate(promise: Promise) = runtime.invoke(promise) { it.downloadUpdate().toJson() }
@@ -130,9 +130,9 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
 
     /** Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call. */
     private fun syncOptions(options: ReadableMap) = SyncOptions(
+        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
         downloadStrategy = option("downloadStrategy", options, DownloadStrategy::fromWire),
-        installStrategy = option("installStrategy", options, InstallStrategy::fromWire),
-        mandatoryInstallStrategy = option("mandatoryInstallStrategy", options, MandatoryInstallStrategy::fromWire),
+        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
     )
 
     private fun <T> option(name: String, options: ReadableMap, parse: (String?) -> T?): T? {

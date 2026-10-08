@@ -1,4 +1,4 @@
-import type { GetStateResult, SyncResult } from '@hotcodepush/protocol';
+import type { GetStateResult } from '@hotcodepush/protocol';
 import { useEffect, useState } from 'react';
 import type { UseUpdatesResult } from './definitions';
 import { HotCodePush, subscribeToRunningCycles } from './hot-code-push';
@@ -43,10 +43,10 @@ export function useUpdates(): UseUpdatesResult {
       HotCodePush.addListener('downloadProgress', event =>
         setDownloadProgress(event.progress),
       ),
-      HotCodePush.addListener('rolledBack', refreshState),
       HotCodePush.addListener('updateAvailable', refreshState),
       HotCodePush.addListener('updateDownloaded', endDownload),
       HotCodePush.addListener('updateFailed', endDownload),
+      HotCodePush.addListener('updateRolledBack', refreshState),
     ];
     const unsubscribeFromRunningCycles = subscribeToRunningCycles(count => {
       setRunningCycleCount(count);
@@ -64,14 +64,7 @@ export function useUpdates(): UseUpdatesResult {
   return {
     downloadProgress,
     isSyncing: runningCycleCount > 0 || downloadProgress !== null,
-    lastSync: resolveLastSync(state),
+    lastSync: state.lastCheck?.result ?? null,
     state,
   };
-}
-
-/**
- * The last cycle's result as a sync's: a check alone ends where a sync that downloads nothing does.
- */
-function resolveLastSync(state: GetStateResult): SyncResult | null {
-  return state.lastCheck === null ? null : state.lastCheck.result;
 }

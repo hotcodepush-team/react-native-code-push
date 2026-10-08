@@ -1,12 +1,16 @@
 import type { GetStateResult, SyncResult } from '@hotcodepush/protocol';
 
 export type {
-  ApplyResult,
-  CheckResult,
+  ApplyMoment,
+  ApplyStrategy,
+  ApplyUpdateResult,
+  CheckForUpdateResult,
+  CheckStrategy,
   ConditionType,
   DownloadProgressEvent,
-  DownloadResult,
   DownloadStrategy,
+  DownloadUpdateOptions,
+  DownloadUpdateResult,
   FailedReason,
   GetChannelResult,
   GetDeviceResult,
@@ -15,15 +19,12 @@ export type {
   HotCodePushEventName,
   HotCodePushEvents,
   HotCodePushListenerHandle,
-  InstallMoment,
-  InstallStrategy,
-  MandatoryInstallStrategy,
+  MandatoryApplyStrategy,
   NotifyReadyResult,
   ReadySignal,
   Release,
   RollbackReason,
   RollbackUpdateOptions,
-  RolledBackEvent,
   SetAttributesOptions,
   SetChannelOptions,
   SetRestartAllowedOptions,
@@ -34,6 +35,7 @@ export type {
   UpdateAvailableEvent,
   UpdateDownloadedEvent,
   UpdateFailedEvent,
+  UpdateRolledBackEvent,
 } from '@hotcodepush/protocol';
 
 /**
