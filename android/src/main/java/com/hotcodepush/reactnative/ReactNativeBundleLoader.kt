@@ -35,6 +35,11 @@ class ReactNativeBundleLoader(private val context: Context, storeDirectory: File
         return requestedReload.also { requestedReload = null }
     }
 
+    /** A reload the SDK asked for has not reached the host yet: whatever renders until it does is the instance the reload replaces. */
+    @get:Synchronized
+    val isReloadPending: Boolean
+        get() = requestedReload != null
+
     /** The host runs the bundle from now on, `null` the embedded one: answers its file, none while the bundle's JavaScript is not on disk. */
     @Synchronized
     fun serveBundle(bundleId: String?): File? {

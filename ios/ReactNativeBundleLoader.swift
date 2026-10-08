@@ -49,6 +49,13 @@ final class ReactNativeBundleLoader: BundleLoader {
         return requested
     }
 
+    /// A reload the SDK asked for has not reached the host yet: whatever renders until it does is the instance the reload replaces.
+    var isReloadPending: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return requestedReload != nil
+    }
+
     /// The host runs the bundle from now on, `nil` the embedded one: answers its file, none while the bundle's JavaScript is not on disk.
     func serveBundle(bundleId: String?) -> URL? {
         let url = bundleId.map(bundleFileURL(bundleId:)).flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }

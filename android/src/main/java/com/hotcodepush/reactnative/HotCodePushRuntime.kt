@@ -120,7 +120,8 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
      * A JavaScript instance was created, at the start and at every reload: the first mount that leaves a view inside a
      * React root is the first frame after the root view renders: the readiness signal `render`, and whatever
      * `readySignal` is, the moment the app is up in this run, which the core's own restarts wait for. The root itself is
-     * mounted before any render, so an instance that renders nothing never signals it.
+     * mounted before any render, so an instance that renders nothing never signals it, and an instance that renders while a
+     * reload the SDK asked for is pending is the one the reload replaces, whose render signals nothing.
      */
     @OptIn(UnstableReactNativeAPI::class)
     fun observeFirstRender(reactContext: ReactContext) {
@@ -133,6 +134,7 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
                 if (!containsRenderedReactRoot(decorView)) return
                 uiManager.removeUIManagerEventListener(this)
                 val core = core ?: return
+                if (loader.isReloadPending) return
                 scope.launch { core.handleRendered() }
             }
 

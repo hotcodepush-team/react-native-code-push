@@ -160,8 +160,10 @@ import UIKit
     }
 
     /// The first frame after the root view renders: the readiness signal `render`, and whatever `readySignal` is, the
-    /// moment the app is up in this run, which the core's own restarts wait for. Every reload renders a new root.
+    /// moment the app is up in this run, which the core's own restarts wait for. Every reload renders a new root; a frame
+    /// while a reload the SDK asked for is pending is the replaced instance's and signals nothing.
     @objc private func handleContentDidAppear() {
+        guard !loader.isReloadPending else { return }
         Task { await core?.handleRendered() }
     }
 
