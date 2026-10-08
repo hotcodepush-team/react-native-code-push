@@ -17,7 +17,7 @@ import UIKit
     static let sdkVersion = "0.0.0"
 
     private static let contentDidAppearNotification = Notification.Name("RCTContentDidAppearNotification")
-    private static let notConfiguredMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
+    private static let missingConfigurationMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
     private static let notServedMessage = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs `HotCodePush.bundleURL()` in the AppDelegate, which `npx hotcodepush doctor` checks."
 
     private enum Method: String {
@@ -32,6 +32,8 @@ import UIKit
     private var core: Core?
     private var events: CoreEvents?
     private var isStarted = false
+    /// Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it.
+    private var notConfiguredMessage = HotCodePushRuntime.missingConfigurationMessage
     private var retainedRolledBackEvent: [String: Any]?
     private weak var eventSink: HotCodePushEventSink?
 
@@ -94,7 +96,7 @@ import UIKit
             return
         }
         guard let core = core else {
-            reject(HotCodePushRuntime.notConfiguredMessage)
+            reject(notConfiguredMessage)
             return
         }
         Task {
@@ -119,8 +121,15 @@ import UIKit
     }
 
     private func createCore(isServedBySdk: Bool) -> Core? {
-        guard var configuration = HotCodePushRuntime.readConfiguration() else {
-            NSLog("[HotCodePush] %@", HotCodePushRuntime.notConfiguredMessage)
+        let readConfiguration: Configuration?
+        do {
+            readConfiguration = try HotCodePushRuntime.readConfiguration()
+        } catch {
+            notConfiguredMessage = "HotCodePush is not configured: the app's hotcodepush.json was refused: \(HotCodePushRuntime.describeRefusal(error)). Check the project's hotcodepush.json and build the app again."
+            readConfiguration = nil
+        }
+        guard var configuration = readConfiguration else {
+            NSLog("[HotCodePush] %@", notConfiguredMessage)
             return nil
         }
         if !isServedBySdk {
@@ -286,15 +295,21 @@ import UIKit
 
     // MARK: The platform's facts
 
-    private static func readConfiguration() -> Configuration? {
+    /// The resource file as the core reads it, `nil` when the build wrote none; the reader's refusal is thrown.
+    private static func readConfiguration() throws -> Configuration? {
         guard let url = Bundle.main.url(forResource: "hotcodepush", withExtension: "json"), let data = try? Data(contentsOf: url) else {
             return nil
         }
-        do {
-            return try Configuration.decode(data)
-        } catch {
-            NSLog("[HotCodePush] hotcodepush.json could not be read: %@", String(describing: error))
-            return nil
+        return try Configuration.decode(data)
+    }
+
+    /// The reader's own words: a decoding error describes itself in its context, which its `localizedDescription` leaves out.
+    private static func describeRefusal(_ error: Error) -> String {
+        switch error as? DecodingError {
+        case .dataCorrupted(let context), .keyNotFound(_, let context), .typeMismatch(_, let context), .valueNotFound(_, let context):
+            return context.debugDescription
+        default:
+            return String(describing: error)
         }
     }
 

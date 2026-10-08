@@ -46,6 +46,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import java.io.File
+import java.io.FileNotFoundException
 
 /** What the runtime hands the Turbo Module: an event to emit to JavaScript. */
 interface HotCodePushEventSink {
@@ -67,6 +68,9 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
 
     @Volatile private var eventSink: HotCodePushEventSink? = null
     private var isStarted = false
+
+    /** Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it. */
+    @Volatile private var notConfiguredMessage = MISSING_CONFIGURATION_MESSAGE
     private var retainedRolledBackEvent: JSONObject? = null
 
     // The host
@@ -162,7 +166,7 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     fun invoke(promise: Promise, body: suspend (Core) -> JSONObject?) {
         val core = core
         if (core == null) {
-            promise.reject(HotCodePushModule.REJECTION_CODE, NOT_CONFIGURED_MESSAGE)
+            promise.reject(HotCodePushModule.REJECTION_CODE, notConfiguredMessage)
             return
         }
         scope.launch {
@@ -191,9 +195,14 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     }
 
     private fun createCore(isServedBySdk: Boolean): Core? {
-        val readConfiguration = readConfiguration(context)
+        val readConfiguration = try {
+            readConfiguration(context)
+        } catch (refusal: Exception) {
+            notConfiguredMessage = "HotCodePush is not configured: the app's hotcodepush.json was refused: ${refusal.message}. Check the project's hotcodepush.json and build the app again."
+            null
+        }
         if (readConfiguration == null) {
-            Log.e(TAG, NOT_CONFIGURED_MESSAGE)
+            Log.e(TAG, notConfiguredMessage)
             return null
         }
         if (!isServedBySdk) Log.w(TAG, NOT_SERVED_MESSAGE)
@@ -264,7 +273,7 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     companion object {
         const val SDK_VERSION = "0.0.0"
 
-        private const val NOT_CONFIGURED_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
+        private const val MISSING_CONFIGURATION_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
         private const val NOT_SERVED_MESSAGE = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs HotCodePushReactHost.getDefaultReactHost in MainApplication, which `npx hotcodepush doctor` checks."
         private const val RELOAD_REASON = "HotCodePush"
         private const val START_FAILED_MESSAGE = "HotCodePush could not answer which bundle React Native runs, so the embedded bundle runs."
@@ -275,10 +284,14 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
         fun get(context: Context): HotCodePushRuntime =
             instance ?: synchronized(this) { instance ?: HotCodePushRuntime(context.applicationContext).also { instance = it } }
 
-        private fun readConfiguration(context: Context): Configuration? = try {
-            context.assets.open("hotcodepush.json").bufferedReader().use { Configuration.decode(it.readText()) }
-        } catch (exception: Exception) {
-            null
+        /** The resource file as the core reads it, `null` when the build wrote none; the reader's refusal is thrown. */
+        private fun readConfiguration(context: Context): Configuration? {
+            val text = try {
+                context.assets.open("hotcodepush.json").bufferedReader().use { it.readText() }
+            } catch (missing: FileNotFoundException) {
+                return null
+            }
+            return Configuration.decode(text)
         }
 
         /** A run whose JavaScript the SDK does not serve counts as a debug build, which `enabledInDebugBuilds` then switches off. */
