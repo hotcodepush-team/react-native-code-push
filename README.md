@@ -66,8 +66,8 @@ A debug build asks Metro for its JavaScript, so live updates are off there and e
 import { HotCodePush, useUpdates } from '@hotcodepush/react-native-code-push';
 
 const result = await HotCodePush.sync();
-if (result.status === 'UPDATED') {
-  console.log(`release #${result.release.number} installs ${result.installAt}`);
+if (result.status === 'DOWNLOADED') {
+  console.log(`release #${result.release.number} applies at ${result.applyAt}`);
 }
 
 function ReleaseLabel() {
@@ -82,7 +82,7 @@ function ReleaseLabel() {
 }
 ```
 
-With `autoCheck` on, the default, the SDK checks on start, on resume and while the app stays in the foreground, and what follows a check is the download and install strategies' business; `sync()` is for the moment you want an update now. Applying an update reloads the JavaScript without restarting the app. An app that asks before downloading sets `downloadStrategy` to `manual` and calls `downloadUpdate()` on `updateAvailable`; one that protects a flow sets `installStrategy` to `manual` and calls `applyUpdate()` when it is ready.
+With `checkStrategy` at `auto`, the default, the SDK checks on start, on resume and while the app stays in the foreground, and what follows a check is the download and apply strategies' business; `sync()` runs one such cycle when you want an update now, and with `checkStrategy` at `manual` it is the only way a cycle starts. Applying an update reloads the JavaScript without restarting the app. An app that asks before downloading sets `downloadStrategy` to `manual` and calls `downloadUpdate()` on `updateAvailable`, naming the apply strategies for that cycle if it wants; one that protects a flow sets `applyStrategy` to `manual` and calls `applyUpdate()` when it is ready.
 
 ## Documentation
 
