@@ -117,19 +117,21 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     }
 
     /**
-     * A JavaScript instance was created, at the start and at every reload: the first mount that leaves a view inside a
+     * A JavaScript instance was created, at the start and at every reload: the first frame that finds a view inside a
      * React root is the first frame after the root view renders: the readiness signal `render`, and whatever
      * `readySignal` is, the moment the app is up in this run, which the core's own restarts wait for. The root itself is
      * mounted before any render, so an instance that renders nothing never signals it, and an instance that renders while a
      * reload the SDK asked for is pending is the one the reload replaces, whose render signals nothing.
+     *
+     * The root is checked at every frame React Native dispatches its mounting work, never at a mount alone: the first mount
+     * can come before React Native reports the instance here, and a mount made before the root view is attached runs at
+     * the attach, which no mount listener hears. A reload clears the root before it creates the next instance.
      */
     @OptIn(UnstableReactNativeAPI::class)
     fun observeFirstRender(reactContext: ReactContext) {
         val uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC) ?: return
         uiManager.addUIManagerEventListener(object : UIManagerListener {
-            override fun didDispatchMountItems(uiManager: UIManager) = Unit
-
-            override fun didMountItems(uiManager: UIManager) {
+            override fun didDispatchMountItems(uiManager: UIManager) {
                 val decorView = reactContext.currentActivity?.window?.decorView ?: return
                 if (!containsRenderedReactRoot(decorView)) return
                 uiManager.removeUIManagerEventListener(this)
@@ -137,6 +139,8 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
                 if (loader.isReloadPending) return
                 scope.launch { core.handleRendered() }
             }
+
+            override fun didMountItems(uiManager: UIManager) = Unit
 
             override fun didScheduleMountItems(uiManager: UIManager) = Unit
 
