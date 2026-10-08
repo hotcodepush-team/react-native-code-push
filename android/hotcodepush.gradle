@@ -1,6 +1,7 @@
 // The build step of the Android build. The app's build.gradle applies this file with the one line `hotcodepush init`
-// adds; for every variant, the task below runs the CLI's `binary create` after React Native's bundling, which writes
-// hotcodepush.json into the variant's assets and registers the binary. A variant React Native bundles nothing for gets
+// adds; for every variant, the task below runs the CLI after React Native's bundling: a store build, a build type other
+// than debug, runs `binary create`, which writes hotcodepush.json into the variant's assets and creates the binary; any
+// other build runs `resource-file write`, which writes the file alone. A variant React Native bundles nothing for gets
 // the file without an embedded bundle, and no binary.
 
 import javax.inject.Inject
@@ -36,6 +37,9 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
     @Internal
     abstract DirectoryProperty getStagingDirectory()
 
+    @Input
+    abstract Property<Boolean> getStoreBuild()
+
     @Inject
     abstract ExecOperations getExecOperations()
 
@@ -53,15 +57,15 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
         }
         stagingDirectory.get().asFile.mkdirs()
         def npx = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c', 'npx'] : ['npx']
+        def command = storeBuild.get()
+            ? ['binary', 'create', '--binary-version', binaryVersion.get(), '--binary-build', binaryBuild.get()]
+            : ['resource-file', 'write']
         execOperations.exec {
             it.workingDir = projectRoot.get().asFile
-            it.commandLine(npx + [
-                'hotcodepush', 'binary', 'create',
+            it.commandLine(npx + ['hotcodepush'] + command + [
                 '--platform', 'android',
-                '--path', stagingDirectory.get().asFile.path,
-                '--binary-version', binaryVersion.get(),
-                '--binary-build', binaryBuild.get(),
-                '--out', outputDirectory.file('hotcodepush.json').get().asFile.path,
+                '--embedded-bundle-path', stagingDirectory.get().asFile.path,
+                '--resource-file-path', outputDirectory.file('hotcodepush.json').get().asFile.path,
             ])
         }
     }
@@ -75,7 +79,7 @@ androidComponents.onVariants(androidComponents.selector().all()) { variant ->
     def reactExtension = project.extensions.findByName('react')
     def binaryCreateTask = tasks.register("createHotCodePushBinary${variantName}", HotCodePushBinaryCreateTask) {
         it.group = 'hotcodepush'
-        it.description = "Writes hotcodepush.json into the ${variant.name} assets and registers the binary of a bundled build."
+        it.description = "Writes hotcodepush.json into the ${variant.name} assets and creates the binary of a store build."
         it.binaryBuild.set(variant.outputs[0].versionCode.map { String.valueOf(it) })
         it.binaryVersion.set(variant.outputs[0].versionName)
         if (bundleTask != null) {
@@ -84,7 +88,8 @@ androidComponents.onVariants(androidComponents.selector().all()) { variant ->
         }
         it.projectRoot.set(reactExtension == null ? rootProject.layout.projectDirectory.dir('..') : reactExtension.root)
         it.stagingDirectory.set(layout.buildDirectory.dir("intermediates/hotcodepush/${variant.name}"))
-        // The resource file carries the build's time as the floor and the registration is per build: the step never counts as up to date.
+        it.storeBuild.set(variant.buildType != 'debug')
+        // The resource file carries the build's time as the floor and a store build creates its binary on every run: the step never counts as up to date.
         it.outputs.upToDateWhen { false }
     }
     variant.sources.assets.addGeneratedSourceDirectory(binaryCreateTask) { it.outputDirectory }

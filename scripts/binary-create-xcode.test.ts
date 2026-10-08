@@ -58,28 +58,56 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
     rmSync(buildDirectoryPath, { force: true, recursive: true });
   });
 
-  it('should pass the version and build of the processed Info.plist, which the device reports', () => {
-    expect(runScript({ CONFIGURATION: 'Release' })).toEqual([
+  it('should run binary create when the build is an archive', () => {
+    expect(
+      runScript({ CONFIGURATION: 'Release', DEPLOYMENT_POSTPROCESSING: 'YES' }),
+    ).toEqual([
       'hotcodepush',
       'binary',
       'create',
-      '--platform',
-      'ios',
-      '--path',
-      appPath,
       '--binary-version',
       '2.4.1',
       '--binary-build',
       '57',
-      '--out',
+      '--platform',
+      'ios',
+      '--embedded-bundle-path',
+      appPath,
+      '--resource-file-path',
       join(appPath, 'hotcodepush.json'),
     ]);
+  });
+
+  it('should run resource-file write when the build is not an archive', () => {
+    expect(
+      runScript({ CONFIGURATION: 'Release', DEPLOYMENT_POSTPROCESSING: 'NO' }),
+    ).toEqual([
+      'hotcodepush',
+      'resource-file',
+      'write',
+      '--platform',
+      'ios',
+      '--embedded-bundle-path',
+      appPath,
+      '--resource-file-path',
+      join(appPath, 'hotcodepush.json'),
+    ]);
+  });
+
+  it('should pass the version and build of the processed Info.plist, which the device reports, when the build is an archive', () => {
+    const args = runScript({
+      CONFIGURATION: 'Release',
+      DEPLOYMENT_POSTPROCESSING: 'YES',
+    });
+
+    expect(readOption(args, '--binary-version')).toBe('2.4.1');
+    expect(readOption(args, '--binary-build')).toBe('57');
   });
 
   it('should pass a directory without the bundle when the configuration is Debug on a device', () => {
     const embeddedAssetsPath = readOption(
       runScript({ CONFIGURATION: 'Debug', PLATFORM_NAME: 'iphoneos' }),
-      '--path',
+      '--embedded-bundle-path',
     );
 
     expect(embeddedAssetsPath).not.toBe(appPath);
@@ -89,7 +117,7 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
   it('should pass a directory without the bundle when the configuration is Debug on a simulator', () => {
     const embeddedAssetsPath = readOption(
       runScript({ CONFIGURATION: 'Debug', PLATFORM_NAME: 'iphonesimulator' }),
-      '--path',
+      '--embedded-bundle-path',
     );
 
     expect(embeddedAssetsPath).not.toBe(appPath);
@@ -99,20 +127,21 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
   function readOption(args: string[], flag: string): string {
     const value = args[args.indexOf(flag) + 1];
     if (value === undefined) {
-      throw new Error(`binary create was run without ${flag}`);
+      throw new Error(`the CLI was run without ${flag}`);
     }
     return value;
   }
 
   /**
-   * Runs the script with the build settings Xcode gives a phase of the app target, the template's version settings
-   * among them, and returns the arguments it ran binary create with.
+   * Runs the script with the build settings Xcode gives a phase of the app target in a build, not an archive, the
+   * template's version settings among them, and returns the arguments it ran the CLI with.
    */
   function runScript(buildSettings: Record<string, string>): string[] {
     execFileSync('/bin/sh', [SCRIPT_PATH], {
       env: {
         CONFIGURATION_BUILD_DIR: buildDirectoryPath,
         CURRENT_PROJECT_VERSION: '1',
+        DEPLOYMENT_POSTPROCESSING: 'NO',
         DERIVED_FILE_DIR: join(buildDirectoryPath, 'DerivedSources'),
         INFOPLIST_PATH: join(APP_NAME, 'Info.plist'),
         MARKETING_VERSION: '1.0',
