@@ -99,7 +99,7 @@ npm test
 npm run build
 ```
 
-The native code compiles inside an app: `ci.yml` builds the [demo app](https://github.com/hotcodepush-team/react-native-code-push-demo) with the package from the commit on both platforms. The cores and their tests live in [core-ios](https://github.com/hotcodepush-team/core-ios) and [core-android](https://github.com/hotcodepush-team/core-android).
+The iOS code compiles inside an app: `ci.yml` builds the [demo app](https://github.com/hotcodepush-team/react-native-code-push-demo) with the package from the commit on both platforms; the Android library also builds and runs its unit tests on its own with `npm run verify:android`. The cores and their tests live in [core-ios](https://github.com/hotcodepush-team/core-ios) and [core-android](https://github.com/hotcodepush-team/core-android).
 
 ## License
 
