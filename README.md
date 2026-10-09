@@ -82,7 +82,7 @@ function ReleaseLabel() {
 }
 ```
 
-With `checkStrategy` at `auto`, the default, the SDK checks on start, on resume and while the app stays in the foreground, and what follows a check is the download and apply strategies' business; `sync()` runs one such cycle when you want an update now, and with `checkStrategy` at `manual` it is the only way a cycle starts. Applying an update reloads the JavaScript without restarting the app. An app that asks before downloading sets `downloadStrategy` to `manual` and calls `downloadUpdate()` on `updateAvailable`, naming the apply strategies for that cycle if it wants; one that protects a flow sets `applyStrategy` to `manual` and calls `applyUpdate()` when it is ready.
+With `checkStrategy` at `auto`, the default, the SDK checks on start, on resume and while the app stays in the foreground, and what follows a check is the download and apply strategies' business; `sync()` runs one such cycle when you want an update now, and with `checkStrategy` at `manual` it is the only way a cycle starts. Applying an update reloads the JavaScript without restarting the app. A reload the app performs itself, `DevSettings.reload()` or a restart library, runs the bundle it ran before; a waiting update applies at the next start or through `applyUpdate()`. An app that asks before downloading sets `downloadStrategy` to `manual` and calls `downloadUpdate()` on `updateAvailable`, naming the apply strategies for that cycle if it wants; one that protects a flow sets `applyStrategy` to `manual` and calls `applyUpdate()` when it is ready.
 
 ## Documentation
 
