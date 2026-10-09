@@ -17,7 +17,8 @@ env:
 # The native code compiles inside an app: the platform jobs install the package from this commit into the demo at
 # the commit the baseline names and build it. Debug builds, which bundle no JavaScript and so create no binary.
 # The newest-react-native jobs install it into a fresh app on React Native's latest release instead and build a release,
-# which runs the build step.
+# which runs the build step. The Android library also builds on its own, against the devDependency's React Native, to
+# run its unit tests.
 jobs:
   javascript:
     name: Lint, typecheck, test and build the JavaScript
@@ -33,6 +34,22 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+  android-library:
+    name: Build and test the Android library on its own
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+      - run: npm ci
+      - run: npm run verify:android
   android:
     name: Build the Android library inside the demo
     runs-on: ubuntu-latest
