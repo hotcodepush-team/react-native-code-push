@@ -11,16 +11,11 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.View
-import android.view.ViewGroup
 import com.facebook.react.ReactApplication
 import com.facebook.react.bridge.JSBundleLoader
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactContext
-import com.facebook.react.bridge.UIManager
-import com.facebook.react.bridge.UIManagerListener
 import com.facebook.react.common.annotations.UnstableReactNativeAPI
-import com.facebook.react.uimanager.ReactRoot
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.common.UIManagerType
 import com.hotcodepush.core.Clock
@@ -117,44 +112,19 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
     }
 
     /**
-     * A JavaScript instance was created, at the start and at every reload: the first frame that finds a view inside a
-     * React root is the first frame after the root view renders: the readiness signal `render`, and whatever
-     * `readySignal` is, the moment the app is up in this run, which the core's own restarts wait for. The root itself is
-     * mounted before any render, so an instance that renders nothing never signals it, and an instance that renders while a
-     * reload the SDK asked for is pending is the one the reload replaces, whose render signals nothing.
-     *
-     * The root is checked at every frame React Native dispatches its mounting work, never at a mount alone: the first mount
-     * can come before React Native reports the instance here, and a mount made before the root view is attached runs at
-     * the attach, which no mount listener hears. A reload clears the root before it creates the next instance.
+     * A JavaScript instance was created, at the start and at every reload: its first render, which [FirstRenderListener]
+     * observes, is the readiness signal `render`, and whatever `readySignal` is, the moment the app is up in this run,
+     * which the core's own restarts wait for.
      */
     @OptIn(UnstableReactNativeAPI::class)
     fun observeFirstRender(reactContext: ReactContext) {
         val uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC) ?: return
-        uiManager.addUIManagerEventListener(object : UIManagerListener {
-            override fun didDispatchMountItems(uiManager: UIManager) {
-                val decorView = reactContext.currentActivity?.window?.decorView ?: return
-                if (!containsRenderedReactRoot(decorView)) return
-                uiManager.removeUIManagerEventListener(this)
-                val core = core ?: return
-                if (loader.isReloadPending) return
-                scope.launch { core.handleRendered() }
-            }
-
-            override fun didMountItems(uiManager: UIManager) = Unit
-
-            override fun didScheduleMountItems(uiManager: UIManager) = Unit
-
-            override fun willDispatchViewUpdates(uiManager: UIManager) = Unit
-
-            override fun willMountItems(uiManager: UIManager) = Unit
-        })
+        uiManager.addUIManagerEventListener(FirstRenderListener(loader, { reactContext.currentActivity?.window?.decorView }, ::reportRendered))
     }
 
-    // The getter called as a method: ReactRoot is Java until React Native 0.82 and Kotlin from 0.83, which has no property for it.
-    private fun containsRenderedReactRoot(view: View): Boolean = when (view) {
-        is ReactRoot -> view.getRootViewGroup().childCount > 0
-        is ViewGroup -> (0 until view.childCount).any { containsRenderedReactRoot(view.getChildAt(it)) }
-        else -> false
+    private fun reportRendered() {
+        val core = core ?: return
+        scope.launch { core.handleRendered() }
     }
 
     // The Turbo Module
