@@ -50,27 +50,17 @@ import UIKit
         return loader.serveBundle(bundleId: resolveServedBundleId()) ?? ReactNativeBundleLoader.embeddedBundleURL
     }
 
-    /// The bundle the new JavaScript instance runs: the start's answer, the bundle of a reload the SDK asked for, else the core's answer to the reload.
+    /// The bundle the new JavaScript instance runs: the start's answer, the bundle of a reload the SDK asked for, else the running one.
+    /// A reload the SDK did not ask for — `DevSettings.reload()`, react-native-restart, a development reload — serves the running bundle and the core is not told.
     private func resolveServedBundleId() -> String? {
         let requestedReload = loader.beginBundleRequest()
         if claimStart() {
             return createCore(isServedBySdk: true)?.handleAppStartBlocking()
         }
-        guard let core = core else { return nil }
         if let requestedReload = requestedReload {
             return requestedReload.bundleId
         }
-        return HotCodePushRuntime.reportReload(to: core)
-    }
-
-    /// A reload the SDK did not ask for — `DevSettings.reload()`, react-native-restart, a development reload — goes through the core's gate.
-    /// The host waits for the answer as long as for the start's, then runs the embedded bundle until the core reloads it into its choice.
-    private static func reportReload(to core: Core) -> String? {
-        let answer = ReloadAnswer()
-        Task.detached(priority: .userInitiated) {
-            answer.resolve(await core.handleAppReload())
-        }
-        return answer.wait(timeout: Core.startTimeout)
+        return loader.runningBundleId
     }
 
     // MARK: The Turbo Module
@@ -342,23 +332,6 @@ import UIKit
     private static func resolveStoreDirectory() -> URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return support.appendingPathComponent("hotcodepush", isDirectory: true)
-    }
-}
-
-/// The reload's answer handed from the core's task to the host's waiting thread.
-private final class ReloadAnswer: @unchecked Sendable {
-    private let semaphore = DispatchSemaphore(value: 0)
-    private var bundleId: String?
-
-    func resolve(_ bundleId: String?) {
-        self.bundleId = bundleId
-        semaphore.signal()
-    }
-
-    /// The answer, `nil` for the embedded bundle and when none came within the timeout; the signal orders the write before the read.
-    func wait(timeout: TimeInterval) -> String? {
-        guard semaphore.wait(timeout: .now() + timeout) == .success else { return nil }
-        return bundleId
     }
 }
 

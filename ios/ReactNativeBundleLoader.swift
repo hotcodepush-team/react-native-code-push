@@ -24,7 +24,7 @@ final class ReactNativeBundleLoader: BundleLoader {
     private var isHostRunning = false
     private var isMetered = false
     private var requestedReload: RequestedReload?
-    private var runningBundleId: String?
+    private var _runningBundleId: String?
 
     init(storeDirectory: URL) {
         servedDirectory = storeDirectory.appendingPathComponent("served", isDirectory: true)
@@ -56,12 +56,19 @@ final class ReactNativeBundleLoader: BundleLoader {
         return requestedReload != nil
     }
 
+    /// The bundle the host runs, `nil` the embedded one: the one it was served last, which a bundle request leaves as it is.
+    var runningBundleId: String? {
+        lock.lock()
+        defer { lock.unlock() }
+        return _runningBundleId
+    }
+
     /// The host runs the bundle from now on, `nil` the embedded one: answers its file, none while the bundle's JavaScript is not on disk.
     func serveBundle(bundleId: String?) -> URL? {
         let url = bundleId.map(bundleFileURL(bundleId:)).flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
         lock.lock()
         defer { lock.unlock() }
-        runningBundleId = url == nil ? nil : bundleId
+        _runningBundleId = url == nil ? nil : bundleId
         isHostRunning = true
         return url
     }
@@ -100,7 +107,7 @@ final class ReactNativeBundleLoader: BundleLoader {
     func servedBundleId() -> String? {
         lock.lock()
         defer { lock.unlock() }
-        return isHostRunning ? runningBundleId : persistedBundleId()
+        return isHostRunning ? _runningBundleId : persistedBundleId()
     }
 
     func isConnectionMetered() -> Bool {

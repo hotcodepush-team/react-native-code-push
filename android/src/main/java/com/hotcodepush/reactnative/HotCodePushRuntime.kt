@@ -35,10 +35,7 @@ import com.hotcodepush.core.UpdateRolledBackEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import java.io.File
 import java.io.FileNotFoundException
@@ -84,21 +81,14 @@ class HotCodePushRuntime private constructor(private val context: Context) : Cor
         return bundleFile?.let { JSBundleLoader.createFileLoader(it.path) } ?: embeddedBundleLoader
     }
 
-    /** The bundle the new JavaScript instance runs: the start's answer, the bundle of a reload the SDK asked for, else the core's answer to the reload. */
+    /**
+     * The bundle the new JavaScript instance runs: the start's answer, the bundle of a reload the SDK asked for, else the running one.
+     * A reload the SDK did not ask for — `DevSettings.reload()`, react-native-restart, a development reload — serves the running bundle and the core is not told.
+     */
     private fun resolveServedBundleId(): String? {
         val requestedReload = loader.beginBundleRequest()
         if (claimStart()) return createCore(isServedBySdk = true)?.handleAppStartBlocking(isHeadless = isHeadlessStart())
-        val core = core ?: return null
-        return if (requestedReload != null) requestedReload.bundleId else reportReload(core)
-    }
-
-    /**
-     * A reload the SDK did not ask for — `DevSettings.reload()`, react-native-restart, a development reload — goes through the core's gate.
-     * The host waits for the answer as long as for the start's, then runs the embedded bundle until the core reloads it into its choice.
-     */
-    private fun reportReload(core: Core): String? = runBlocking {
-        val reload = scope.async { core.handleAppReload() }
-        withTimeoutOrNull((Core.START_TIMEOUT * 1000).toLong()) { reload.await() }
+        return if (requestedReload != null) requestedReload.bundleId else loader.runningBundleId
     }
 
     /**

@@ -23,7 +23,11 @@ class ReactNativeBundleLoader(private val context: Context, storeDirectory: File
 
     private var isHostRunning = false
     private var requestedReload: RequestedReload? = null
-    private var runningBundleId: String? = null
+
+    /** The bundle the host runs, `null` the embedded one: the one it was served last, which a bundle request leaves as it is. */
+    @get:Synchronized
+    var runningBundleId: String? = null
+        private set
 
     /**
      * The host asks for its bundle, at the start and at every reload: until it is served one, the core's choice is persisted and
