@@ -45,7 +45,8 @@
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run lint && npm run typecheck && npm test && npm run build"
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build",
+    "verify:android": "cd android && ./gradlew build --console=plain"
   },
   "codegenConfig": {
     "name": "HotCodePushSpec",

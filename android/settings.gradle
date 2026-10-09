@@ -1,0 +1,12 @@
+// The library built on its own, for its unit tests. React Native comes from the package's devDependency as an app's build
+// finds it: the Gradle plugin from its included build, react-android at the version React Native's plugin forces. An app's
+// root build script puts the plugin on the classpath; here the root is the library, whose build script stays as it ships.
+includeBuild('../node_modules/@react-native/gradle-plugin')
+rootProject.name = 'react-native-code-push'
+
+def reactAndroidProperties = new Properties()
+file('../node_modules/react-native/ReactAndroid/gradle.properties').withInputStream { reactAndroidProperties.load(it) }
+gradle.rootProject {
+    buildscript.dependencies.add('classpath', 'com.facebook.react:react-native-gradle-plugin')
+    configurations.configureEach { resolutionStrategy.force("com.facebook.react:react-android:${reactAndroidProperties.VERSION_NAME}") }
+}

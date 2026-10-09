@@ -46,4 +46,7 @@ dependencies {
     implementation 'com.facebook.react:react-android'
     implementation 'com.hotcodepush:core-android:28a52e98e47db20b69bd6914538a21a5975853e6'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.20.0'
+    testImplementation 'org.robolectric:robolectric:4.17'
 }
