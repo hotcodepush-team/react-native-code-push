@@ -10,8 +10,8 @@ const EMBEDDED_STATE: GetStateResult = {
   fallbackRelease: null,
   index: null,
   lastCheck: null,
-  lastReportAt: null,
   nextRelease: null,
+  reportedAt: null,
 };
 
 /**
