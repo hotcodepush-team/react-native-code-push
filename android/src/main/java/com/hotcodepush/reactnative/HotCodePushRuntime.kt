@@ -50,7 +50,7 @@ interface HotCodePushEventSink {
  * verdict — the pending switch, the rollback of a release that never became ready — is in before any JavaScript runs,
  * and the Turbo Module of every JavaScript instance since talks to that one core.
  */
-class HotCodePushRuntime private constructor(private val context: Context) : CoreListener {
+class HotCodePushRuntime internal constructor(private val context: Context) : CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val storeDirectory = File(context.filesDir, "hotcodepush")
