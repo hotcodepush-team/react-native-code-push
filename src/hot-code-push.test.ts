@@ -15,7 +15,7 @@ vi.mock('./NativeHotCodePush', () => ({
 }));
 
 const UPDATE_ROLLED_BACK_EVENT: UpdateRolledBackEvent = {
-  from: {
+  fromRelease: {
     bundleId: '0f8fad5b-d9cb-469f-a165-70867728950e',
     bundleVersion: '1.4.2',
     id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
@@ -23,7 +23,7 @@ const UPDATE_ROLLED_BACK_EVENT: UpdateRolledBackEvent = {
     number: 43,
   },
   reason: 'READINESS_TIMED_OUT',
-  to: null,
+  toRelease: null,
 };
 
 describe('HotCodePush', () => {

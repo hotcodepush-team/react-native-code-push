@@ -123,7 +123,7 @@ import UIKit
             return nil
         }
         if !isServedBySdk {
-            configuration.enabledInDebugBuilds = false
+            configuration.isEnabledInDebugBuilds = false
             NSLog("[HotCodePush] %@", HotCodePushRuntime.notServedMessage)
         }
         let events = CoreEvents(runtime: self)
@@ -194,8 +194,8 @@ import UIKit
         case .setChannel:
             try await core.setChannel(HotCodePushRuntime.channelChoice(from: options))
         case .setRestartAllowed:
-            guard let allowed = options["allowed"] as? Bool else { throw PlainError("allowed must be a boolean") }
-            await core.setRestartAllowed(allowed)
+            guard let isAllowed = options["isAllowed"] as? Bool else { throw PlainError("isAllowed must be a boolean") }
+            await core.setRestartAllowed(isAllowed)
         case .showDebugScreen:
             await HotCodePushRuntime.presentDebugScreen(core: core)
         case .sync:
@@ -262,9 +262,9 @@ import UIKit
         eventSink?.emitEvent(eventName, payload: payload)
     }
 
-    fileprivate func emitDownloadProgress(releaseId: String, downloadedBytes: Int, totalBytes: Int) {
-        let progress = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 0
-        eventSink?.emitEvent("downloadProgress", payload: ["releaseId": releaseId, "downloadedBytes": downloadedBytes, "totalBytes": totalBytes, "progress": progress])
+    fileprivate func emitDownloadProgress(releaseId: String, progressBytes: Int, downloadSizeBytes: Int) {
+        let progress = downloadSizeBytes > 0 ? Double(progressBytes) / Double(downloadSizeBytes) : 0
+        eventSink?.emitEvent("downloadProgress", payload: ["downloadSizeBytes": downloadSizeBytes, "progress": progress, "progressBytes": progressBytes, "releaseId": releaseId])
     }
 
     /// Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then.
@@ -312,7 +312,7 @@ import UIKit
         }
     }
 
-    /// A run whose JavaScript the SDK does not serve counts as a debug build, which `enabledInDebugBuilds` then switches off.
+    /// A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off.
     private static func deviceFacts(isServedBySdk: Bool) -> DeviceFacts {
         let info = Bundle.main.infoDictionary ?? [:]
         #if DEBUG
@@ -355,8 +355,8 @@ private final class CoreEvents: CoreListener {
         runtime?.emit("updateFailed", event)
     }
 
-    func downloadProgress(releaseId: String, downloadedBytes: Int, totalBytes: Int) {
-        runtime?.emitDownloadProgress(releaseId: releaseId, downloadedBytes: downloadedBytes, totalBytes: totalBytes)
+    func downloadProgress(releaseId: String, progressBytes: Int, downloadSizeBytes: Int) {
+        runtime?.emitDownloadProgress(releaseId: releaseId, progressBytes: progressBytes, downloadSizeBytes: downloadSizeBytes)
     }
 
     func updateRolledBack(_ event: UpdateRolledBackEvent) {

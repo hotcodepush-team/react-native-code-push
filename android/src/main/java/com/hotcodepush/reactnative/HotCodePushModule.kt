@@ -93,13 +93,13 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
     }
 
     override fun setRestartAllowed(options: ReadableMap, promise: Promise) {
-        if (!options.hasKey("allowed") || options.getType("allowed") != ReadableType.Boolean) {
-            promise.reject(REJECTION_CODE, "allowed must be a boolean")
+        if (!options.hasKey("isAllowed") || options.getType("isAllowed") != ReadableType.Boolean) {
+            promise.reject(REJECTION_CODE, "isAllowed must be a boolean")
             return
         }
-        val allowed = options.getBoolean("allowed")
+        val isAllowed = options.getBoolean("isAllowed")
         runtime.invoke(promise) {
-            it.setRestartAllowed(allowed)
+            it.setRestartAllowed(isAllowed)
             null
         }
     }

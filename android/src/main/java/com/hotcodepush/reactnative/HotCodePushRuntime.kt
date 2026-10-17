@@ -172,7 +172,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
             return null
         }
         if (!isServedBySdk) Log.w(TAG, NOT_SERVED_MESSAGE)
-        val configuration = if (isServedBySdk) readConfiguration else readConfiguration.copy(enabledInDebugBuilds = false)
+        val configuration = if (isServedBySdk) readConfiguration else readConfiguration.copy(isEnabledInDebugBuilds = false)
         val core = Core(
             configuration = configuration,
             device = deviceFacts(context, isServedBySdk),
@@ -222,11 +222,11 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         eventSink?.emitEvent("updateFailed", event.toJson())
     }
 
-    override fun downloadProgress(releaseId: String, downloadedBytes: Long, totalBytes: Long) {
-        val progress = if (totalBytes > 0) downloadedBytes.toDouble() / totalBytes else 0.0
+    override fun downloadProgress(releaseId: String, progressBytes: Long, downloadSizeBytes: Long) {
+        val progress = if (downloadSizeBytes > 0) progressBytes.toDouble() / downloadSizeBytes else 0.0
         eventSink?.emitEvent(
             "downloadProgress",
-            JSONObject().put("releaseId", releaseId).put("downloadedBytes", downloadedBytes).put("totalBytes", totalBytes).put("progress", progress),
+            JSONObject().put("downloadSizeBytes", downloadSizeBytes).put("progress", progress).put("progressBytes", progressBytes).put("releaseId", releaseId),
         )
     }
 
@@ -260,7 +260,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
             return Configuration.decode(text)
         }
 
-        /** A run whose JavaScript the SDK does not serve counts as a debug build, which `enabledInDebugBuilds` then switches off. */
+        /** A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off. */
         private fun deviceFacts(context: Context, isServedBySdk: Boolean): DeviceFacts {
             val info = context.packageManager.getPackageInfo(context.packageName, 0)
             val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode else @Suppress("DEPRECATION") info.versionCode.toLong()
