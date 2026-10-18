@@ -60,6 +60,8 @@ On Android the Gradle file above adds core-android's `maven` branch, where the p
 
 A debug build asks Metro for its JavaScript, so live updates are off there and every result says `SKIPPED` with `BUILD_DEBUG`; the build step runs in it too and writes a `hotcodepush.json` that names no embedded bundle, without a login. Try an update in a release build.
 
+On the web, and in a host without the native module such as Expo Go, the package loads and every method rejects with an error that names the build live updates need.
+
 ## Usage
 
 ```tsx

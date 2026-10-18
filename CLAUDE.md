@@ -10,7 +10,7 @@ When code and plan disagree, stop and surface it; never improvise.
 ## Layout
 
 ```
-src/                                               NativeHotCodePush.ts (the Codegen spec), hot-code-push.ts (the API object), use-updates.ts (the hook), definitions.ts
+src/                                               NativeHotCodePush.ts (the Codegen spec), NativeHotCodePush.web.ts (null, the web has no native module), hot-code-push.ts (the API object), use-updates.ts (the hook), definitions.ts
 ios/                                               the Turbo Module (Objective-C++), the runtime and the bundle loader (Swift) over HotCodePushCore
 android/src/main/java/com/hotcodepush/reactnative  the Turbo Module, the runtime, the first-render listener, the bundle loader and the React host over com.hotcodepush:core-android
 android/src/test/java/com/hotcodepush/reactnative  the Robolectric tests of the Android runtime, which verify:android runs
@@ -59,7 +59,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The SDK never sees an API DTO: its contract is the channel index, the bundle manifest and the events endpoint, additive only.
 - Safety is on by default and cannot be switched off: the readiness gate, the local blocklist, the automatic rollback.
 - Nothing a device does not need to decide lives here: rollout, conditions, revocation and the cap are evaluated from the index, never configured.
-- Statuses and reasons are `SCREAMING_SNAKE_CASE` from the one catalog; a method throws a plain error only for a programming mistake.
+- Statuses and reasons are `SCREAMING_SNAKE_CASE` from the one catalog; a method throws a plain error only for a programming mistake, and rejects with one error where the native module is missing, on the web and in Expo Go.
 - Results are one shape per method and never throw for an outcome an app should handle.
 - The Codegen spec carries plain objects; `@hotcodepush/protocol` types them one layer up, so the shared types stay the one definition.
 
