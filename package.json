@@ -62,7 +62,7 @@
     }
   },
   "hotcodepush": {
-    "coreIos": "deccdcc294bbc2ab6f678b0ecf242f84fba71a15"
+    "coreIos": "0b55d51096da42f08f90bfad8f17cf56688a8588"
   },
   "dependencies": {
     "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@20053f1"
