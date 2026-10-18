@@ -11,6 +11,7 @@ import type {
   NotifyReadyResult,
   SyncResult,
 } from '@hotcodepush/protocol';
+import type { Spec } from './NativeHotCodePush';
 import NativeHotCodePush from './NativeHotCodePush';
 
 type CycleListener = (runningCycleCount: number) => void;
@@ -20,9 +21,10 @@ type EventListener = (event: object) => void;
 
 type NativeEventName = Exclude<HotCodePushEventName, 'updateRolledBack'>;
 
-type NativeSubscription = ReturnType<
-  typeof NativeHotCodePush.onUpdateAvailable
->;
+type NativeSubscription = ReturnType<Spec['onUpdateAvailable']>;
+
+const NATIVE_MODULE_MISSING_MESSAGE =
+  'Live updates need a development or release build; they are not available on the web or in Expo Go.';
 
 const cycleListeners = new Set<CycleListener>();
 const subscriptions = new Set<NativeSubscription>();
@@ -33,7 +35,8 @@ let keptUpdateRolledBackEvent: Promise<object | null> | undefined;
 let runningCycleCount = 0;
 
 /**
- * The SDK: the one surface `@hotcodepush/protocol` defines, over the native module.
+ * The SDK: the one surface `@hotcodepush/protocol` defines, over the native module. Without it, on the web and in
+ * Expo Go, every method rejects with the one error that names the build live updates need.
  */
 export const HotCodePush: HotCodePushApi = {
   addListener: async (eventName, listener) =>
@@ -43,38 +46,46 @@ export const HotCodePush: HotCodePushApi = {
           eventName as NativeEventName,
           listener as EventListener,
         ),
-  applyUpdate: () =>
-    NativeHotCodePush.applyUpdate() as Promise<ApplyUpdateResult>,
-  checkForUpdate: () =>
+  applyUpdate: async () =>
+    requireNativeModule().applyUpdate() as Promise<ApplyUpdateResult>,
+  checkForUpdate: async () =>
     trackCycle(
-      NativeHotCodePush.checkForUpdate() as Promise<CheckForUpdateResult>,
+      requireNativeModule().checkForUpdate() as Promise<CheckForUpdateResult>,
     ),
-  clearUpdates: () => NativeHotCodePush.clearUpdates(),
-  downloadUpdate: options =>
+  clearUpdates: async () => requireNativeModule().clearUpdates(),
+  downloadUpdate: async options =>
     trackCycle(
-      NativeHotCodePush.downloadUpdate(
+      requireNativeModule().downloadUpdate(
         options ?? {},
       ) as Promise<DownloadUpdateResult>,
     ),
-  getChannel: () => NativeHotCodePush.getChannel() as Promise<GetChannelResult>,
-  getDevice: () => NativeHotCodePush.getDevice() as Promise<GetDeviceResult>,
-  getState: () => NativeHotCodePush.getState() as Promise<GetStateResult>,
-  notifyReady: () =>
-    NativeHotCodePush.notifyReady() as Promise<NotifyReadyResult>,
+  getChannel: async () =>
+    requireNativeModule().getChannel() as Promise<GetChannelResult>,
+  getDevice: async () =>
+    requireNativeModule().getDevice() as Promise<GetDeviceResult>,
+  getState: async () =>
+    requireNativeModule().getState() as Promise<GetStateResult>,
+  notifyReady: async () =>
+    requireNativeModule().notifyReady() as Promise<NotifyReadyResult>,
   removeAllListeners: async () => {
+    requireNativeModule();
     for (const subscription of subscriptions) {
       subscription.remove();
     }
     subscriptions.clear();
     updateRolledBackListeners.clear();
   },
-  rollbackUpdate: options => NativeHotCodePush.rollbackUpdate(options ?? {}),
-  setAttributes: options => NativeHotCodePush.setAttributes(options),
-  setChannel: options => NativeHotCodePush.setChannel(options ?? {}),
-  setRestartAllowed: options => NativeHotCodePush.setRestartAllowed(options),
-  showDebugScreen: () => NativeHotCodePush.showDebugScreen(),
-  sync: options =>
-    trackCycle(NativeHotCodePush.sync(options ?? {}) as Promise<SyncResult>),
+  rollbackUpdate: async options =>
+    requireNativeModule().rollbackUpdate(options ?? {}),
+  setAttributes: async options => requireNativeModule().setAttributes(options),
+  setChannel: async options => requireNativeModule().setChannel(options ?? {}),
+  setRestartAllowed: async options =>
+    requireNativeModule().setRestartAllowed(options),
+  showDebugScreen: async () => requireNativeModule().showDebugScreen(),
+  sync: async options =>
+    trackCycle(
+      requireNativeModule().sync(options ?? {}) as Promise<SyncResult>,
+    ),
 };
 
 /**
@@ -110,11 +121,10 @@ function addNativeListener(
 function addUpdateRolledBackListener(
   listener: EventListener,
 ): HotCodePushListenerHandle {
+  keptUpdateRolledBackEvent ??= requireNativeModule()
+    .consumeUpdateRolledBack()
+    .then(result => (result as { event: object | null }).event);
   updateRolledBackListeners.add(listener);
-  keptUpdateRolledBackEvent ??=
-    NativeHotCodePush.consumeUpdateRolledBack().then(
-      result => (result as { event: object | null }).event,
-    );
   void keptUpdateRolledBackEvent.then(event => {
     if (event !== null && updateRolledBackListeners.has(listener)) {
       listener(event);
@@ -127,19 +137,28 @@ function addUpdateRolledBackListener(
   };
 }
 
+/** The native module, which a development or release build carries; the web and Expo Go have none. */
+function requireNativeModule(): Spec {
+  if (NativeHotCodePush === null) {
+    throw new Error(NATIVE_MODULE_MISSING_MESSAGE);
+  }
+  return NativeHotCodePush;
+}
+
 function subscribeToNativeEvent(
   eventName: NativeEventName,
   listener: EventListener,
 ): NativeSubscription {
+  const nativeModule = requireNativeModule();
   switch (eventName) {
     case 'downloadProgress':
-      return NativeHotCodePush.onDownloadProgress(listener);
+      return nativeModule.onDownloadProgress(listener);
     case 'updateAvailable':
-      return NativeHotCodePush.onUpdateAvailable(listener);
+      return nativeModule.onUpdateAvailable(listener);
     case 'updateDownloaded':
-      return NativeHotCodePush.onUpdateDownloaded(listener);
+      return nativeModule.onUpdateDownloaded(listener);
     case 'updateFailed':
-      return NativeHotCodePush.onUpdateFailed(listener);
+      return nativeModule.onUpdateFailed(listener);
   }
 }
 

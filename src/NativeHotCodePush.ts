@@ -31,4 +31,5 @@ export interface Spec extends TurboModule {
   readonly onUpdateFailed: CodegenTypes.EventEmitter<CodegenTypes.UnsafeObject>;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('HotCodePush');
+// null in a host that carries no native module of ours, Expo Go; the web resolves NativeHotCodePush.web.ts
+export default TurboModuleRegistry.get<Spec>('HotCodePush');

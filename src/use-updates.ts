@@ -39,6 +39,7 @@ export function useUpdates(): UseUpdatesResult {
       setDownloadProgress(null);
       refreshState();
     };
+    // The web and Expo Go have no native module to listen to; the embedded state stands.
     const handles = [
       HotCodePush.addListener('downloadProgress', event =>
         setDownloadProgress(event.progress),
@@ -47,7 +48,7 @@ export function useUpdates(): UseUpdatesResult {
       HotCodePush.addListener('updateDownloaded', endDownload),
       HotCodePush.addListener('updateFailed', endDownload),
       HotCodePush.addListener('updateRolledBack', refreshState),
-    ];
+    ].map(handle => handle.catch(() => null));
     const unsubscribeFromRunningCycles = subscribeToRunningCycles(count => {
       setRunningCycleCount(count);
       refreshState();
@@ -56,7 +57,7 @@ export function useUpdates(): UseUpdatesResult {
       isMounted = false;
       unsubscribeFromRunningCycles();
       for (const handle of handles) {
-        void handle.then(({ remove }) => remove());
+        void handle.then(listenerHandle => listenerHandle?.remove());
       }
     };
   }, []);

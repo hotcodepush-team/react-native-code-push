@@ -1,6 +1,6 @@
 import type { UpdateRolledBackEvent } from '@hotcodepush/protocol';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type NativeModule from './NativeHotCodePush';
+import type { Spec } from './NativeHotCodePush';
 import type * as Sdk from './hot-code-push';
 
 vi.mock('./NativeHotCodePush', () => ({
@@ -28,13 +28,13 @@ const UPDATE_ROLLED_BACK_EVENT: UpdateRolledBackEvent = {
 
 describe('HotCodePush', () => {
   let HotCodePush: typeof Sdk.HotCodePush;
-  let NativeHotCodePush: typeof NativeModule;
+  let NativeHotCodePush: Spec;
   let subscribeToRunningCycles: typeof Sdk.subscribeToRunningCycles;
 
   // A test is a start of the app: the module is loaded anew, as a JavaScript instance loads it.
   beforeEach(async () => {
     vi.resetModules();
-    NativeHotCodePush = (await import('./NativeHotCodePush')).default;
+    NativeHotCodePush = (await import('./NativeHotCodePush')).default as Spec;
     ({ HotCodePush, subscribeToRunningCycles } =
       await import('./hot-code-push'));
   });
