@@ -13,7 +13,7 @@ npm install --save-dev https://pkg.pr.new/hotcodepush-team/cli/hotcodepush@<sha>
 
 The module supports React Native 0.82 and later on the New Architecture, iOS 15.1 and Android 7.0 (API 24).
 
-React Native runs the bundle its host hands it, so each app asks the SDK for it. On iOS, `AppDelegate.swift` returns `HotCodePush.bundleURL()` where it returned the embedded `main.jsbundle`:
+React Native runs the bundle its host hands it, so each app asks the SDK for it. On iOS, the Swift file that overrides `bundleURL()`, `SceneDelegate.swift` from React Native 0.88 and `AppDelegate.swift` before, returns `HotCodePush.bundleURL()` where it returned the embedded `main.jsbundle`:
 
 ```swift
 import HotcodepushReactNativeCodePush
