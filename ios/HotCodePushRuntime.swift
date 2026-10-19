@@ -28,7 +28,6 @@ import UIKit
     private let storeDirectory: URL
 
     private var core: Core?
-    private var events: CoreEvents?
     private var isStarted = false
     /// Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it.
     private var notConfiguredMessage = HotCodePushRuntime.missingConfigurationMessage
@@ -134,7 +133,6 @@ import UIKit
             http: UrlSessionHttpClient(),
             loader: loader,
             listener: events)
-        self.events = events
         self.core = core
         observeAppLifecycle()
         return core
