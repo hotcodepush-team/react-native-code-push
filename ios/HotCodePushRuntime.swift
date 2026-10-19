@@ -260,11 +260,6 @@ import UIKit
         eventSink?.emitEvent(eventName, payload: payload)
     }
 
-    fileprivate func emitDownloadProgress(releaseId: String, progressBytes: Int, downloadSizeBytes: Int) {
-        let progress = downloadSizeBytes > 0 ? Double(progressBytes) / Double(downloadSizeBytes) : 0
-        eventSink?.emitEvent("downloadProgress", payload: ["downloadSizeBytes": downloadSizeBytes, "progress": progress, "progressBytes": progressBytes, "releaseId": releaseId])
-    }
-
     /// Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then.
     fileprivate func retainUpdateRolledBack(_ event: UpdateRolledBackEvent) {
         let payload = try? HotCodePushRuntime.jsObject(event)
@@ -353,8 +348,8 @@ private final class CoreEvents: CoreListener {
         runtime?.emit("updateFailed", event)
     }
 
-    func downloadProgress(releaseId: String, progressBytes: Int, downloadSizeBytes: Int) {
-        runtime?.emitDownloadProgress(releaseId: releaseId, progressBytes: progressBytes, downloadSizeBytes: downloadSizeBytes)
+    func downloadProgress(_ event: DownloadProgressEvent) {
+        runtime?.emit("downloadProgress", event)
     }
 
     func updateRolledBack(_ event: UpdateRolledBackEvent) {

@@ -1,16 +1,12 @@
 package com.hotcodepush.reactnative
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import com.facebook.react.ReactApplication
 import com.facebook.react.bridge.JSBundleLoader
@@ -24,11 +20,11 @@ import com.hotcodepush.core.Configuration
 import com.hotcodepush.core.Core
 import com.hotcodepush.core.CoreListener
 import com.hotcodepush.core.DeviceFacts
+import com.hotcodepush.core.DownloadProgressEvent
 import com.hotcodepush.core.FileStore
-import com.hotcodepush.core.KeyValueStore
+import com.hotcodepush.core.HandlerScheduler
 import com.hotcodepush.core.OkHttpClientAdapter
-import com.hotcodepush.core.ScheduledTask
-import com.hotcodepush.core.Scheduler
+import com.hotcodepush.core.SharedPreferencesStore
 import com.hotcodepush.core.UpdateAvailableEvent
 import com.hotcodepush.core.UpdateDownloadedEvent
 import com.hotcodepush.core.UpdateFailedEvent
@@ -223,12 +219,8 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         eventSink?.emitEvent("updateFailed", event.toJson())
     }
 
-    override fun downloadProgress(releaseId: String, progressBytes: Long, downloadSizeBytes: Long) {
-        val progress = if (downloadSizeBytes > 0) progressBytes.toDouble() / downloadSizeBytes else 0.0
-        eventSink?.emitEvent(
-            "downloadProgress",
-            JSONObject().put("downloadSizeBytes", downloadSizeBytes).put("progress", progress).put("progressBytes", progressBytes).put("releaseId", releaseId),
-        )
+    override fun downloadProgress(event: DownloadProgressEvent) {
+        eventSink?.emitEvent("downloadProgress", event.toJson())
     }
 
     /** Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then. */
@@ -272,32 +264,6 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
                 isDebugBuild = !isServedBySdk || (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
             )
         }
-    }
-}
-
-/** Every write commits before it returns: `apply()` reaches the disk about 100 ms later, and a crash in that window would lose the state the next start rolls back from. */
-@SuppressLint("ApplySharedPref")
-internal class SharedPreferencesStore(private val preferences: SharedPreferences) : KeyValueStore {
-    override fun getString(key: String): String? = preferences.getString(key, null)
-
-    override fun putString(key: String, value: String?) {
-        preferences.edit().apply { if (value == null) remove(key) else putString(key, value) }.commit()
-    }
-
-    override fun getInt(key: String): Int? = if (preferences.contains(key)) runCatching { preferences.getInt(key, 0) }.getOrNull() else null
-
-    override fun putInt(key: String, value: Int?) {
-        preferences.edit().apply { if (value == null) remove(key) else putInt(key, value) }.commit()
-    }
-}
-
-private class HandlerScheduler : Scheduler {
-    private val handler = Handler(Looper.getMainLooper())
-
-    override fun schedule(afterSeconds: Double, block: () -> Unit): ScheduledTask {
-        val runnable = Runnable(block)
-        handler.postDelayed(runnable, (afterSeconds * 1000).toLong())
-        return ScheduledTask { handler.removeCallbacks(runnable) }
     }
 }
 
