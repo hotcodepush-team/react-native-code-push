@@ -17,8 +17,8 @@ env:
 # The native code compiles inside an app: the platform jobs install the package from this commit into the demo at
 # the commit the baseline names and build it. Debug builds, which bundle no JavaScript and so create no binary.
 # The newest-react-native jobs install it into a fresh app on React Native's latest release instead and build a release,
-# which runs the build step. The Android library also builds on its own, against the devDependency's React Native, to
-# run its unit tests.
+# which runs the build step. They read the demo at main for the CLI it pins. The Android library also builds on its own,
+# against the devDependency's React Native, to run its unit tests.
 jobs:
   javascript:
     name: Lint, typecheck, test and build the JavaScript
@@ -126,13 +126,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           path: package
-      - name: Read the pinned demo commit
-        id: baseline
-        run: echo "demo=$(node -p "require('./package/benchmarks/baseline.json').demo.commit")" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v7
         with:
           repository: hotcodepush-team/react-native-code-push-demo
-          ref: ${{ steps.baseline.outputs.demo }}
           path: demo
       - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         if: matrix.platform == 'ios'
