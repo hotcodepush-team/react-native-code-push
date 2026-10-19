@@ -13,7 +13,7 @@ When code and plan disagree, stop and surface it; never improvise.
 src/                                               NativeHotCodePush.ts (the Codegen spec), NativeHotCodePush.web.ts (null, the web has no native module), hot-code-push.ts (the API's type and object), use-updates.ts (the hook), definitions.ts
 ios/                                               the Turbo Module (Objective-C++), the runtime and the bundle loader (Swift) over HotCodePushCore
 android/src/main/java/com/hotcodepush/reactnative  the Turbo Module, the runtime, the first-render listener, the bundle loader and the React host over com.hotcodepush:core-android
-android/src/test/java/com/hotcodepush/reactnative  the Robolectric tests of the Android runtime, which verify:android runs
+android/src/test/java/com/hotcodepush/reactnative  the Robolectric tests of the Android runtime and the Turbo Module, which verify:android runs
 android/settings.gradle                             the library's own build, which takes React Native's Gradle plugin and react-android's version from node_modules
 android/hotcodepush.gradle                         the task that runs binary create for every variant, and core-android's maven branch among `:app`'s repositories; applied by the app's build.gradle
 scripts/binary-create-xcode.sh                     binary create as the app's Xcode phase runs it
