@@ -159,7 +159,6 @@ const styles = StyleSheet.create({
 `,
   );
 }
-run('npm', ['install', '--no-audit', '--no-fund']);
 if (process.platform === 'darwin') {
   run('pod', ['install'], join(target, 'ios'));
 }
