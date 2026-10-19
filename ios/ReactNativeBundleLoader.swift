@@ -1,6 +1,5 @@
 import Foundation
 import HotCodePushCore
-import Network
 import React
 
 /// React Native loads the JavaScript its host is handed: a bundle is laid out by path under the store's `served`
@@ -18,20 +17,15 @@ final class ReactNativeBundleLoader: BundleLoader {
 
     private let defaults = UserDefaults.standard
     private let lock = NSLock()
-    private let monitor = NWPathMonitor()
+    private let networkMonitor = NetworkMonitor()
     private let servedDirectory: URL
 
     private var isHostRunning = false
-    private var isMetered = false
     private var requestedReload: RequestedReload?
     private var _runningBundleId: String?
 
     init(storeDirectory: URL) {
         servedDirectory = storeDirectory.appendingPathComponent("served", isDirectory: true)
-        monitor.pathUpdateHandler = { [weak self] path in
-            self?.isMetered = path.isExpensive || path.isConstrained
-        }
-        monitor.start(queue: DispatchQueue.global(qos: .utility))
     }
 
     static var embeddedBundleURL: URL? {
@@ -111,7 +105,7 @@ final class ReactNativeBundleLoader: BundleLoader {
     }
 
     func isConnectionMetered() -> Bool {
-        return isMetered
+        return networkMonitor.isConnectionMetered()
     }
 
     private func bundleFileURL(bundleId: String) -> URL {
@@ -125,33 +119,5 @@ final class ReactNativeBundleLoader: BundleLoader {
             return nil
         }
         return bundleId
-    }
-}
-
-/// The files compiled into the binary, `main.jsbundle` and `assets/` in the app bundle, addressed by the embedded manifest's hashes;
-/// none in a build that bundled no JavaScript, whose resource file carries no manifest.
-final class AppBundleEmbeddedBundle: EmbeddedBundle {
-    private let pathsBySha256: [String: String]
-
-    init(manifest: EmbeddedBundleManifest?) {
-        var paths: [String: String] = [:]
-        for file in manifest?.files ?? [] {
-            paths[file.sha256] = file.path
-        }
-        pathsBySha256 = paths
-    }
-
-    func has(sha256: String) -> Bool {
-        guard let path = pathsBySha256[sha256] else { return false }
-        return FileManager.default.fileExists(atPath: fileURL(path: path).path)
-    }
-
-    func copyFile(sha256: String, to destination: URL) throws {
-        guard let path = pathsBySha256[sha256] else { throw PlainError("No embedded file with hash \(sha256)") }
-        try FileManager.default.copyItem(at: fileURL(path: path), to: destination)
-    }
-
-    private func fileURL(path: String) -> URL {
-        return Bundle.main.bundleURL.appendingPathComponent(path)
     }
 }

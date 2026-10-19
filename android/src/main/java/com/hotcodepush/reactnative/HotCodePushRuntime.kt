@@ -3,8 +3,6 @@ package com.hotcodepush.reactnative
 import android.app.Activity
 import android.app.Application
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import com.facebook.react.ReactApplication
@@ -15,7 +13,6 @@ import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.common.UIManagerType
 import com.hotcodepush.core.ActivityManagerProcessState
-import com.hotcodepush.core.Clock
 import com.hotcodepush.core.Configuration
 import com.hotcodepush.core.Core
 import com.hotcodepush.core.CoreListener
@@ -23,8 +20,6 @@ import com.hotcodepush.core.DeviceFacts
 import com.hotcodepush.core.DownloadProgressEvent
 import com.hotcodepush.core.FileStore
 import com.hotcodepush.core.HandlerScheduler
-import com.hotcodepush.core.OkHttpClientAdapter
-import com.hotcodepush.core.SharedPreferencesStore
 import com.hotcodepush.core.UpdateAvailableEvent
 import com.hotcodepush.core.UpdateDownloadedEvent
 import com.hotcodepush.core.UpdateFailedEvent
@@ -34,8 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import java.io.File
-import java.io.FileNotFoundException
 
 /** What the runtime hands the Turbo Module: an event to emit to JavaScript. */
 interface HotCodePushEventSink {
@@ -50,8 +43,7 @@ interface HotCodePushEventSink {
 class HotCodePushRuntime internal constructor(private val context: Context) : CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val storeDirectory = File(context.filesDir, "hotcodepush")
-    private val loader = ReactNativeBundleLoader(context, storeDirectory, ::reloadReactNative)
+    private val loader = ReactNativeBundleLoader(context, FileStore.defaultRootDirectory(context), ::reloadReactNative)
 
     @Volatile private var core: Core? = null
 
@@ -59,7 +51,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     private var isStarted = false
 
     /** Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it. */
-    @Volatile private var notConfiguredMessage = MISSING_CONFIGURATION_MESSAGE
+    @Volatile private var notConfiguredMessage = Configuration.MISSING_MESSAGE
     private var retainedUpdateRolledBackEvent: JSONObject? = null
 
     // The host
@@ -149,9 +141,9 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
 
     private fun createCore(isServedBySdk: Boolean): Core? {
         val readConfiguration = try {
-            readConfiguration(context)
+            Configuration.read(context)
         } catch (refusal: Exception) {
-            notConfiguredMessage = "HotCodePush is not configured: the app's hotcodepush.json was refused: ${refusal.message}. Check the project's hotcodepush.json and build the app again."
+            notConfiguredMessage = Configuration.resolveRefusedMessage(refusal)
             null
         }
         if (readConfiguration == null) {
@@ -160,19 +152,17 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         }
         if (!isServedBySdk) Log.w(TAG, NOT_SERVED_MESSAGE)
         val configuration = if (isServedBySdk) readConfiguration else readConfiguration.copy(isEnabledInDebugBuilds = false)
+        // A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off.
+        val device = DeviceFacts.current(context, SDK_VERSION).let { if (isServedBySdk) it else it.copy(isDebugBuild = true) }
         val core = Core(
+            context = context,
             configuration = configuration,
-            device = deviceFacts(context, isServedBySdk),
-            store = SharedPreferencesStore(context.getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)),
-            files = FileStore(storeDirectory),
+            device = device,
             embedded = ApkEmbeddedBundle(context, configuration.embeddedBundleManifest),
-            http = OkHttpClientAdapter(),
             loader = loader,
             listener = this,
-            scheduler = scheduler,
-            clock = Clock { System.currentTimeMillis() },
             scope = scope,
-            temporaryDirectory = File(context.cacheDir, "hotcodepush"),
+            scheduler = scheduler,
         )
         this.core = core
         observeAppLifecycle(core)
@@ -220,7 +210,6 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     }
 
     companion object {
-        private const val MISSING_CONFIGURATION_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
         private const val NOT_SERVED_MESSAGE = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs HotCodePushReactHost.getDefaultReactHost in MainApplication, which `npx hotcodepush doctor` checks."
         private const val RELOAD_REASON = "HotCodePush"
         private const val START_FAILED_MESSAGE = "HotCodePush could not answer which bundle React Native runs, so the embedded bundle runs."
@@ -230,30 +219,6 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
 
         fun get(context: Context): HotCodePushRuntime =
             instance ?: synchronized(this) { instance ?: HotCodePushRuntime(context.applicationContext).also { instance = it } }
-
-        /** The resource file as the core reads it, `null` when the build wrote none; the reader's refusal is thrown. */
-        private fun readConfiguration(context: Context): Configuration? {
-            val text = try {
-                context.assets.open("hotcodepush.json").bufferedReader().use { it.readText() }
-            } catch (missing: FileNotFoundException) {
-                return null
-            }
-            return Configuration.decode(text)
-        }
-
-        /** A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off. */
-        private fun deviceFacts(context: Context, isServedBySdk: Boolean): DeviceFacts {
-            val info = context.packageManager.getPackageInfo(context.packageName, 0)
-            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode else @Suppress("DEPRECATION") info.versionCode.toLong()
-            return DeviceFacts(
-                platform = "android",
-                binaryVersion = info.versionName ?: "",
-                binaryBuild = versionCode.toString(),
-                osVersion = Build.VERSION.RELEASE ?: "",
-                sdkVersion = SDK_VERSION,
-                isDebugBuild = !isServedBySdk || (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
-            )
-        }
     }
 }
 

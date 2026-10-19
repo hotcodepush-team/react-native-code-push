@@ -1,7 +1,6 @@
 import Foundation
 import HotCodePushCore
 import React
-import UIKit
 
 /// What the runtime hands the Turbo Module: an event to emit to JavaScript.
 @objc public protocol HotCodePushEventSink: AnyObject {
@@ -15,7 +14,6 @@ import UIKit
     @objc public static let shared = HotCodePushRuntime()
 
     private static let contentDidAppearNotification = Notification.Name("RCTContentDidAppearNotification")
-    private static let missingConfigurationMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
     private static let notServedMessage = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs `HotCodePush.bundleURL()` in the file that overrides `bundleURL()`, which `npx hotcodepush doctor` checks."
 
     private enum Method: String {
@@ -23,20 +21,17 @@ import UIKit
         case notifyReady, rollbackUpdate, setAttributes, setChannel, setRestartAllowed, showDebugScreen, sync
     }
 
-    private let loader: ReactNativeBundleLoader
+    private let loader = ReactNativeBundleLoader(storeDirectory: FileStore.defaultRootDirectory)
     private let lock = NSLock()
-    private let storeDirectory: URL
 
     private var core: Core?
     private var isStarted = false
     /// Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it.
-    private var notConfiguredMessage = HotCodePushRuntime.missingConfigurationMessage
+    private var notConfiguredMessage = Configuration.missingMessage
     private var retainedUpdateRolledBackEvent: [String: Any]?
     private weak var eventSink: HotCodePushEventSink?
 
     override private init() {
-        storeDirectory = HotCodePushRuntime.resolveStoreDirectory()
-        loader = ReactNativeBundleLoader(storeDirectory: storeDirectory)
         super.init()
     }
 
@@ -110,39 +105,33 @@ import UIKit
     private func createCore(isServedBySdk: Bool) -> Core? {
         let readConfiguration: Configuration?
         do {
-            readConfiguration = try HotCodePushRuntime.readConfiguration()
+            readConfiguration = try Configuration.read()
         } catch {
-            notConfiguredMessage = "HotCodePush is not configured: the app's hotcodepush.json was refused: \(HotCodePushRuntime.describeRefusal(error)). Check the project's hotcodepush.json and build the app again."
+            notConfiguredMessage = Configuration.resolveRefusedMessage(error)
             readConfiguration = nil
         }
         guard var configuration = readConfiguration else {
             NSLog("[HotCodePush] %@", notConfiguredMessage)
             return nil
         }
+        var device = DeviceFacts.current(sdkVersion: sdkVersion)
+        // A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off.
         if !isServedBySdk {
             configuration.isEnabledInDebugBuilds = false
+            device.isDebugBuild = true
             NSLog("[HotCodePush] %@", HotCodePushRuntime.notServedMessage)
         }
         let events = CoreEvents(runtime: self)
         let core = Core(
             configuration: configuration,
-            device: HotCodePushRuntime.deviceFacts(isServedBySdk: isServedBySdk),
-            store: UserDefaultsStore(),
-            files: FileStore(rootDirectory: storeDirectory),
-            embedded: AppBundleEmbeddedBundle(manifest: configuration.embeddedBundleManifest),
-            http: UrlSessionHttpClient(),
+            device: device,
+            embedded: AppBundleEmbeddedBundle(manifest: configuration.embeddedBundleManifest, rootDirectory: Bundle.main.bundleURL),
             loader: loader,
             listener: events)
         self.core = core
-        observeAppLifecycle()
+        NotificationCenter.default.addObserver(self, selector: #selector(handleContentDidAppear), name: HotCodePushRuntime.contentDidAppearNotification, object: nil)
+        core.observeAppLifecycle()
         return core
-    }
-
-    private func observeAppLifecycle() {
-        let center = NotificationCenter.default
-        center.addObserver(self, selector: #selector(handleContentDidAppear), name: HotCodePushRuntime.contentDidAppearNotification, object: nil)
-        center.addObserver(self, selector: #selector(handleDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
-        center.addObserver(self, selector: #selector(handleWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
     /// The first frame after the root view renders: the readiness signal `render`, and whatever `readySignal` is, the
@@ -153,36 +142,28 @@ import UIKit
         Task { await core?.handleRendered() }
     }
 
-    @objc private func handleDidEnterBackground() {
-        Task { await core?.handleAppPause() }
-    }
-
-    @objc private func handleWillEnterForeground() {
-        Task { await core?.handleAppResume() }
-    }
-
     // MARK: Methods
 
     private func perform(_ method: Method, options: [String: Any], core: Core) async throws -> Any? {
         switch method {
         case .applyUpdate:
-            return try HotCodePushRuntime.jsObject(await core.applyUpdate())
+            return try Json.encodeObject(await core.applyUpdate())
         case .checkForUpdate:
-            return try HotCodePushRuntime.jsObject(await core.checkForUpdate())
+            return try Json.encodeObject(await core.checkForUpdate())
         case .clearUpdates:
             await core.clearUpdates()
         case .consumeUpdateRolledBack:
             return consumeUpdateRolledBack()
         case .downloadUpdate:
-            return try HotCodePushRuntime.jsObject(await core.downloadUpdate(options: try HotCodePushRuntime.downloadUpdateOptions(from: options)))
+            return try Json.encodeObject(await core.downloadUpdate(options: try HotCodePushRuntime.downloadUpdateOptions(from: options)))
         case .getChannel:
-            return try HotCodePushRuntime.jsObject(await core.channel())
+            return try Json.encodeObject(await core.channel())
         case .getDevice:
-            return try HotCodePushRuntime.jsObject(await core.deviceResult())
+            return try Json.encodeObject(await core.deviceResult())
         case .getState:
-            return try HotCodePushRuntime.jsObject(await core.getState())
+            return try Json.encodeObject(await core.getState())
         case .notifyReady:
-            return try HotCodePushRuntime.jsObject(await core.notifyReady())
+            return try Json.encodeObject(await core.notifyReady())
         case .rollbackUpdate:
             try await core.rollbackUpdate(detail: options["reason"] as? String)
         case .setAttributes:
@@ -195,7 +176,7 @@ import UIKit
         case .showDebugScreen:
             await HotCodePushRuntime.presentDebugScreen(core: core)
         case .sync:
-            return try HotCodePushRuntime.jsObject(await core.sync(trigger: .manual, options: try HotCodePushRuntime.syncOptions(from: options)))
+            return try Json.encodeObject(await core.sync(trigger: .manual, options: try HotCodePushRuntime.syncOptions(from: options)))
         }
         return nil
     }
@@ -254,13 +235,13 @@ import UIKit
     // MARK: Events
 
     fileprivate func emit<T: Encodable>(_ eventName: String, _ event: T) {
-        guard let payload = try? HotCodePushRuntime.jsObject(event) else { return }
+        guard let payload = try? Json.encodeObject(event) else { return }
         eventSink?.emitEvent(eventName, payload: payload)
     }
 
     /// Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then.
     fileprivate func retainUpdateRolledBack(_ event: UpdateRolledBackEvent) {
-        let payload = try? HotCodePushRuntime.jsObject(event)
+        let payload = try? Json.encodeObject(event)
         lock.lock()
         retainedUpdateRolledBackEvent = payload
         lock.unlock()
@@ -275,55 +256,6 @@ import UIKit
         return ["event": event]
     }
 
-    private static func jsObject<T: Encodable>(_ value: T) throws -> [String: Any] {
-        let data = try Json.encoder.encode(value)
-        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw PlainError("The result could not be encoded")
-        }
-        return object
-    }
-
-    // MARK: The platform's facts
-
-    /// The resource file as the core reads it, `nil` when the build wrote none; the reader's refusal is thrown.
-    private static func readConfiguration() throws -> Configuration? {
-        guard let url = Bundle.main.url(forResource: "hotcodepush", withExtension: "json"), let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        return try Configuration.decode(data)
-    }
-
-    /// The reader's own words: a decoding error describes itself in its context, which its `localizedDescription` leaves out.
-    private static func describeRefusal(_ error: Error) -> String {
-        switch error as? DecodingError {
-        case .dataCorrupted(let context), .keyNotFound(_, let context), .typeMismatch(_, let context), .valueNotFound(_, let context):
-            return context.debugDescription
-        default:
-            return String(describing: error)
-        }
-    }
-
-    /// A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off.
-    private static func deviceFacts(isServedBySdk: Bool) -> DeviceFacts {
-        let info = Bundle.main.infoDictionary ?? [:]
-        #if DEBUG
-        let isDebugBuild = true
-        #else
-        let isDebugBuild = !isServedBySdk
-        #endif
-        return DeviceFacts(
-            platform: "ios",
-            binaryVersion: info["CFBundleShortVersionString"] as? String ?? "",
-            binaryBuild: info["CFBundleVersion"] as? String ?? "",
-            osVersion: UIDevice.current.systemVersion,
-            sdkVersion: sdkVersion,
-            isDebugBuild: isDebugBuild)
-    }
-
-    private static func resolveStoreDirectory() -> URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return support.appendingPathComponent("hotcodepush", isDirectory: true)
-    }
 }
 
 /// The core's five events on their way to JavaScript.
