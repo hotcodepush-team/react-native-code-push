@@ -43,10 +43,7 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         promise.resolve(JSONObject().put("event", runtime.takeRetainedUpdateRolledBackEvent() ?: JSONObject.NULL).toWritableMap())
     }
 
-    override fun downloadUpdate(options: ReadableMap, promise: Promise) {
-        val downloadUpdateOptions = readOptions(promise) { downloadUpdateOptions(options) } ?: return
-        runtime.invoke(promise) { it.downloadUpdate(downloadUpdateOptions).toJson() }
-    }
+    override fun downloadUpdate(options: ReadableMap, promise: Promise) = runtime.invoke(promise) { it.downloadUpdate(downloadUpdateOptions(options)).toJson() }
 
     override fun getChannel(promise: Promise) = runtime.invoke(promise) { it.channel().toJson() }
 
@@ -110,10 +107,7 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         null
     }
 
-    override fun sync(options: ReadableMap, promise: Promise) {
-        val syncOptions = readOptions(promise) { syncOptions(options) } ?: return
-        runtime.invoke(promise) { it.sync(SyncTrigger.MANUAL, syncOptions).toJson() }
-    }
+    override fun sync(options: ReadableMap, promise: Promise) = runtime.invoke(promise) { it.sync(SyncTrigger.MANUAL, syncOptions(options)).toJson() }
 
     override fun emitEvent(eventName: String, payload: JSONObject) {
         // React Native hands the module its emitter callback after init; an event before that has no JavaScript listening yet.
@@ -125,14 +119,6 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
             "updateDownloaded" -> emitOnUpdateDownloaded(value)
             "updateFailed" -> emitOnUpdateFailed(value)
         }
-    }
-
-    /** The call's options, or `null` once the call is rejected: a value outside its choices is a programming mistake. */
-    private fun <T : Any> readOptions(promise: Promise, read: () -> T): T? = try {
-        read()
-    } catch (exception: PlainException) {
-        promise.reject(REJECTION_CODE, exception.message)
-        null
     }
 
     /** The apply strategies for this call. */

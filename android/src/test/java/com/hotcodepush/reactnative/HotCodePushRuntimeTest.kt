@@ -1,8 +1,5 @@
 package com.hotcodepush.reactnative
 
-import android.content.Context
-import android.content.ContextWrapper
-import android.content.res.AssetManager
 import com.facebook.react.bridge.JSBundleLoader
 import com.facebook.react.bridge.JSBundleLoaderDelegate
 import com.hotcodepush.core.Core
@@ -16,7 +13,6 @@ import org.mockito.Mockito.mockConstruction
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.File
 
@@ -80,16 +76,7 @@ class HotCodePushRuntimeTest {
         bundleLoader.persistServedBundle(bundleId)
     }
 
-    private fun contextWithResourceFile(): Context {
-        val resourceAssets = mock(AssetManager::class.java)
-        `when`(resourceAssets.open("hotcodepush.json")).thenAnswer { RESOURCE_FILE.byteInputStream() }
-        return object : ContextWrapper(RuntimeEnvironment.getApplication()) {
-            override fun getAssets(): AssetManager = resourceAssets
-        }
-    }
-
     companion object {
         private const val EMBEDDED_BUNDLE_URL = "assets://index.android.bundle"
-        private const val RESOURCE_FILE = """{"appId":"0b6d5c1e-2f3a-4b5c-8d9e-0f1a2b3c4d5e","channelId":null,"builtAt":"2026-10-08T00:00:00.000Z","embeddedBundleManifest":null}"""
     }
 }
