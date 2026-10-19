@@ -1,7 +1,6 @@
 package com.hotcodepush.reactnative
 
 import android.app.Activity
-import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -15,6 +14,7 @@ import com.facebook.react.bridge.ReactContext
 import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.common.UIManagerType
+import com.hotcodepush.core.ActivityManagerProcessState
 import com.hotcodepush.core.Clock
 import com.hotcodepush.core.Configuration
 import com.hotcodepush.core.Core
@@ -84,18 +84,8 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
      */
     private fun resolveServedBundleId(): String? {
         val requestedReload = loader.beginBundleRequest()
-        if (claimStart()) return createCore(isServedBySdk = true)?.handleAppStartBlocking(isHeadless = isHeadlessStart())
+        if (claimStart()) return createCore(isServedBySdk = true)?.handleAppStartBlocking(isHeadless = !ActivityManagerProcessState.isInForeground())
         return if (requestedReload != null) requestedReload.bundleId else loader.runningBundleId
-    }
-
-    /**
-     * React Native asks for its bundle once an activity is on its way, which puts the process in the foreground; a process a headless
-     * JavaScript task, a data message or a background fetch started is not, and no screen renders in it.
-     */
-    private fun isHeadlessStart(): Boolean {
-        val process = ActivityManager.RunningAppProcessInfo()
-        ActivityManager.getMyMemoryState(process)
-        return process.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
     }
 
     /**
