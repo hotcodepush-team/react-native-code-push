@@ -237,8 +237,6 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     }
 
     companion object {
-        const val SDK_VERSION = "0.0.0"
-
         private const val MISSING_CONFIGURATION_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
         private const val NOT_SERVED_MESSAGE = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs HotCodePushReactHost.getDefaultReactHost in MainApplication, which `npx hotcodepush doctor` checks."
         private const val RELOAD_REASON = "HotCodePush"

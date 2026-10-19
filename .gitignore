@@ -2,6 +2,9 @@
 dist
 node_modules
 *.tgz
+# The SDK version, written from package.json by every build
+android/src/main/java/com/hotcodepush/reactnative/SdkVersion.kt
+ios/SdkVersion.swift
 
 # iOS
 .build

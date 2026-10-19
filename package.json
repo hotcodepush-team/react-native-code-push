@@ -33,20 +33,21 @@
     "ios/",
     "scripts/",
     "!scripts/*.test.ts",
+    "!scripts/write-sdk-version.mjs",
     "src/",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "HotcodepushReactNativeCodePush.podspec"
   ],
   "scripts": {
-    "build": "npm run clean && tsc --project tsconfig.build.json",
+    "build": "npm run clean && node scripts/write-sdk-version.mjs && tsc --project tsconfig.build.json",
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet ios",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
-    "verify:android": "cd android && ./gradlew build --console=plain"
+    "verify:android": "node scripts/write-sdk-version.mjs && cd android && ./gradlew build --console=plain"
   },
   "codegenConfig": {
     "name": "HotCodePushSpec",

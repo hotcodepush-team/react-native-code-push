@@ -14,8 +14,6 @@ import UIKit
 @objc public final class HotCodePushRuntime: NSObject {
     @objc public static let shared = HotCodePushRuntime()
 
-    static let sdkVersion = "0.0.0"
-
     private static let contentDidAppearNotification = Notification.Name("RCTContentDidAppearNotification")
     private static let missingConfigurationMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
     private static let notServedMessage = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs `HotCodePush.bundleURL()` in the file that overrides `bundleURL()`, which `npx hotcodepush doctor` checks."
