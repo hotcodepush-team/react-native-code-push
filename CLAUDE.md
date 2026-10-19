@@ -36,14 +36,14 @@ This package keeps what is React Native's: which bundle the host loads, the relo
 
 ## Commands
 
-| Command                  | Does                                                                                                             |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `npm run lint`           | ESLint, Prettier and SwiftLint                                                                                   |
-| `npm run typecheck`      | TypeScript                                                                                                       |
-| `npm test`               | Vitest over the JavaScript                                                                                       |
-| `npm run build`          | the TypeScript into `dist/`                                                                                      |
-| `npm run verify`         | lint, typecheck, the Vitest tests and the build                                                                  |
-| `npm run verify:android` | Gradle builds, lints and unit-tests the Android library on its own, Robolectric; needs a JDK and the Android SDK |
+| Command                  | Does                                                                                                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`           | ESLint, Prettier and SwiftLint                                                                                                                                                                    |
+| `npm run typecheck`      | TypeScript                                                                                                                                                                                        |
+| `npm test`               | Vitest over the JavaScript                                                                                                                                                                        |
+| `npm run build`          | the TypeScript into `dist/`; writes the SDK version from `package.json` into `SdkVersion.swift` and `SdkVersion.kt`, both ignored, so a fresh checkout runs it before opening the native projects |
+| `npm run verify`         | lint, typecheck, the Vitest tests and the build                                                                                                                                                   |
+| `npm run verify:android` | Gradle builds, lints and unit-tests the Android library on its own, Robolectric; needs a JDK and the Android SDK                                                                                  |
 
 Run `npm run fmt` before every commit.
 The iOS code compiles only inside an app: `ci.yml` builds the demo with the package from the commit, the demo's pod pinned at the package's own `hotcodepush.coreIos` by `benchmarks/prepare-demo.mjs`. The Android library also builds on its own: `android/settings.gradle` resolves React Native from the devDependency, so Codegen runs on the host, and `verify:android` runs its Robolectric tests in their own `ci.yml` job.
