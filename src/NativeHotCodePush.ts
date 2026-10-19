@@ -3,7 +3,7 @@ import { TurboModuleRegistry } from 'react-native';
 
 /**
  * The Turbo Module as Codegen reads it. Every result and every event crosses as a plain object and is typed
- * one layer up by `@hotcodepush/protocol`, so the shared types stay the one definition of the SDK's surface.
+ * one layer up by `@hotcodepush/protocol`, so the shared types stay the one definition of the results and events.
  */
 export interface Spec extends TurboModule {
   applyUpdate(): Promise<CodegenTypes.UnsafeObject>;

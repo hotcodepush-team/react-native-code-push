@@ -1,18 +1,24 @@
 import type {
   ApplyUpdateResult,
   CheckForUpdateResult,
+  DownloadUpdateOptions,
   DownloadUpdateResult,
   GetChannelResult,
   GetDeviceResult,
   GetStateResult,
-  HotCodePushApi,
   HotCodePushEventName,
-  HotCodePushListenerHandle,
+  HotCodePushEvents,
   NotifyReadyResult,
+  RollbackUpdateOptions,
+  SetAttributesOptions,
+  SetChannelOptions,
+  SetRestartAllowedOptions,
+  SyncOptions,
   SyncResult,
 } from '@hotcodepush/protocol';
 import type { Spec } from './NativeHotCodePush';
 import NativeHotCodePush from './NativeHotCodePush';
+import type { HotCodePushListenerHandle } from './definitions';
 
 type CycleListener = (runningCycleCount: number) => void;
 
@@ -35,10 +41,57 @@ let keptUpdateRolledBackEvent: Promise<object | null> | undefined;
 let runningCycleCount = 0;
 
 /**
- * The SDK: the one surface `@hotcodepush/protocol` defines, over the native module. Without it, on the web and in
- * Expo Go, every method rejects with the one error that names the build live updates need.
+ * The React Native SDK over the option, result and event types of `@hotcodepush/protocol`; every listener is
+ * answered with a handle whose `remove()` stops it.
  */
-export const HotCodePush: HotCodePushApi = {
+export interface HotCodePush {
+  /**
+   * One cycle under the strategies, the same the SDK runs on its own at start,
+   * resume and interval, stopping at a `manual` gate for the app: fetch the
+   * index, evaluate it locally, download and verify, apply, report. A second
+   * call while one runs joins the running one.
+   */
+  sync(options?: SyncOptions): Promise<SyncResult>;
+  /** `sync()` with `downloadStrategy` pinned to `manual`: fetch and evaluate, download nothing. */
+  checkForUpdate(): Promise<CheckForUpdateResult>;
+  /** `sync()` with `downloadStrategy` pinned to `auto`: re-check the index, a conditional GET, download and verify, apply per the apply strategies. */
+  downloadUpdate(
+    options?: DownloadUpdateOptions,
+  ): Promise<DownloadUpdateResult>;
+  /** Applies the downloaded update now, whatever the strategy says, and reloads the app. */
+  applyUpdate(): Promise<ApplyUpdateResult>;
+  /** Ends the readiness gate when `readySignal` is `manual`; safe to call at any time on any setting. */
+  notifyReady(): Promise<NotifyReadyResult>;
+  /** Rolls the running release back now, marks its bundle as failed on this device, reports `APP_REQUESTED`, reloads. */
+  rollbackUpdate(options?: RollbackUpdateOptions): Promise<void>;
+  /** Clears every downloaded update and the list of failed bundles, keeps the channel and the attributes, reloads. */
+  clearUpdates(): Promise<void>;
+  /** Restart gating: `isAllowed: false` holds the one restart the SDK would perform on its own — after an `immediate` apply, a `next-resume` apply or a mandatory release alike — until `isAllowed: true` runs it. A restart the app asks for itself, `applyUpdate()`, `rollbackUpdate()` or `clearUpdates()`, is never held. Not persisted: every start begins allowed. */
+  setRestartAllowed(options: SetRestartAllowedOptions): Promise<void>;
+  /** The SDK's state, a snapshot. */
+  getState(): Promise<GetStateResult>;
+  /** The channel in effect with its source. */
+  getChannel(): Promise<GetChannelResult>;
+  /** Switches the device to a channel by name or by id; `null` clears the runtime choice. */
+  setChannel(options: SetChannelOptions): Promise<void>;
+  /** The facts of the device report. */
+  getDevice(): Promise<GetDeviceResult>;
+  /** Merges string attributes the app sets for `attribute` conditions; a `null` value removes a key. */
+  setAttributes(options: SetAttributesOptions): Promise<void>;
+  /** Opens the SDK's native debug screen. */
+  showDebugScreen(): Promise<void>;
+  addListener<EventName extends HotCodePushEventName>(
+    eventName: EventName,
+    listener: (event: HotCodePushEvents[EventName]) => void,
+  ): Promise<HotCodePushListenerHandle>;
+  removeAllListeners(): Promise<void>;
+}
+
+/**
+ * The SDK over the native module. Without it, on the web and in Expo Go, every method rejects with the one error that
+ * names the build live updates need.
+ */
+export const HotCodePush: HotCodePush = {
   addListener: async (eventName, listener) =>
     eventName === 'updateRolledBack'
       ? addUpdateRolledBackListener(listener as EventListener)

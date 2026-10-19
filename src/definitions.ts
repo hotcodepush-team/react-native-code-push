@@ -15,10 +15,8 @@ export type {
   GetChannelResult,
   GetDeviceResult,
   GetStateResult,
-  HotCodePushApi,
   HotCodePushEventName,
   HotCodePushEvents,
-  HotCodePushListenerHandle,
   MandatoryApplyStrategy,
   NotifyReadyResult,
   ReadySignal,
@@ -37,6 +35,10 @@ export type {
   UpdateFailedEvent,
   UpdateRolledBackEvent,
 } from '@hotcodepush/protocol';
+
+export interface HotCodePushListenerHandle {
+  remove: () => Promise<void>;
+}
 
 /**
  * What `useUpdates()` returns, kept current from the five events and `getState()`.
