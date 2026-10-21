@@ -5,6 +5,7 @@ import com.hotcodepush.core.BundleLoader
 import com.hotcodepush.core.EmbeddedBundle
 import com.hotcodepush.core.EmbeddedBundleManifest
 import com.hotcodepush.core.Hashing
+import com.hotcodepush.core.KeyValueStore
 import com.hotcodepush.core.NetworkMonitor
 import com.hotcodepush.core.PlainException
 import java.io.File
@@ -14,12 +15,17 @@ import java.io.InputStream
  * React Native loads the JavaScript its host is handed: a bundle is laid out by path under the store's `served`
  * directory, the host asks for the served one through [HotCodePushReactHost], and a switch is a reload of the host.
  */
-class ReactNativeBundleLoader(context: Context, storeDirectory: File, private val reloadReactNative: () -> Unit) : BundleLoader {
+class ReactNativeBundleLoader(
+    context: Context,
+    /** The core's own store, so the bundle to serve at the next start lies beside the state it belongs to. */
+    private val store: KeyValueStore,
+    storeDirectory: File,
+    private val reloadReactNative: () -> Unit,
+) : BundleLoader {
     /** The bundle a reload the SDK asked for runs, `null` for the embedded one. */
     class RequestedReload(val bundleId: String?)
 
     private val networkMonitor = NetworkMonitor(context)
-    private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
     private val servedDirectory = File(storeDirectory, "served")
 
     private var isHostRunning = false
@@ -61,7 +67,7 @@ class ReactNativeBundleLoader(context: Context, storeDirectory: File, private va
     }
 
     override fun persistServedBundle(bundleId: String?) {
-        preferences.edit().apply { if (bundleId == null) remove(SERVED_BUNDLE_ID_KEY) else putString(SERVED_BUNDLE_ID_KEY, bundleId) }.apply()
+        store.putString(SERVED_BUNDLE_ID_KEY, bundleId)
     }
 
     /** A host that is not running yet is served the core's answer when it asks; a running one reloads into the bundle. */
@@ -82,13 +88,12 @@ class ReactNativeBundleLoader(context: Context, storeDirectory: File, private va
     private fun bundleFile(bundleId: String) = File(projectionDirectory(bundleId), BUNDLE_FILE_NAME)
 
     /** The persisted bundle counts only while its JavaScript is on disk; anything else is the embedded bundle. */
-    private fun persistedBundleId(): String? = preferences.getString(SERVED_BUNDLE_ID_KEY, null)?.takeIf { bundleFile(it).isFile }
+    private fun persistedBundleId(): String? = store.getString(SERVED_BUNDLE_ID_KEY)?.takeIf { bundleFile(it).isFile }
 
     companion object {
         const val BUNDLE_FILE_NAME = "index.android.bundle"
 
-        private const val PREFERENCES_NAME = "hotcodepush.reactNative"
-        private const val SERVED_BUNDLE_ID_KEY = "servedBundleId"
+        private const val SERVED_BUNDLE_ID_KEY = "hotcodepush.servedBundleId"
     }
 }
 

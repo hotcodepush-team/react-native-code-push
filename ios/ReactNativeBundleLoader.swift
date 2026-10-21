@@ -13,18 +13,20 @@ final class ReactNativeBundleLoader: BundleLoader {
     static let bundleFileName = "main.jsbundle"
 
     private static let reloadReason = "HotCodePush"
-    private static let servedBundleIdKey = "hotcodepush.reactNative.servedBundleId"
+    private static let servedBundleIdKey = "hotcodepush.servedBundleId"
 
-    private let defaults = UserDefaults.standard
     private let lock = NSLock()
     private let networkMonitor = NetworkMonitor()
     private let servedDirectory: URL
+    private let store: KeyValueStore
 
     private var isHostRunning = false
     private var requestedReload: RequestedReload?
     private var _runningBundleId: String?
 
-    init(storeDirectory: URL) {
+    /// The store is the core's own, so the bundle to serve at the next start lies beside the state it belongs to.
+    init(store: KeyValueStore, storeDirectory: URL) {
+        self.store = store
         servedDirectory = storeDirectory.appendingPathComponent("served", isDirectory: true)
     }
 
@@ -76,11 +78,7 @@ final class ReactNativeBundleLoader: BundleLoader {
     }
 
     func persistServedBundle(bundleId: String?) {
-        if let bundleId = bundleId {
-            defaults.set(bundleId, forKey: ReactNativeBundleLoader.servedBundleIdKey)
-        } else {
-            defaults.removeObject(forKey: ReactNativeBundleLoader.servedBundleIdKey)
-        }
+        store.set(bundleId, forKey: ReactNativeBundleLoader.servedBundleIdKey)
     }
 
     /// A host that is not running yet is served the core's answer when it asks; a running one reloads into the bundle.
@@ -114,7 +112,7 @@ final class ReactNativeBundleLoader: BundleLoader {
 
     /// The persisted bundle counts only while its JavaScript is on disk; anything else is the embedded bundle.
     private func persistedBundleId() -> String? {
-        guard let bundleId = defaults.string(forKey: ReactNativeBundleLoader.servedBundleIdKey),
+        guard let bundleId = store.string(forKey: ReactNativeBundleLoader.servedBundleIdKey),
               FileManager.default.fileExists(atPath: bundleFileURL(bundleId: bundleId).path) else {
             return nil
         }

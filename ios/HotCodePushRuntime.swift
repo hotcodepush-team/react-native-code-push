@@ -21,7 +21,7 @@ import React
         case notifyReady, rollbackUpdate, setAttributes, setChannel, setRestartAllowed, showDebugScreen, sync
     }
 
-    private let loader = ReactNativeBundleLoader(storeDirectory: FileStore.defaultRootDirectory)
+    private let loader = ReactNativeBundleLoader(store: UserDefaultsStore(), storeDirectory: FileStore.defaultRootDirectory)
     private let lock = NSLock()
 
     private var core: Core?

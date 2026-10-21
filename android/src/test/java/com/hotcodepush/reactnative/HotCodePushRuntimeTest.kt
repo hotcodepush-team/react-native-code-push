@@ -3,6 +3,7 @@ package com.hotcodepush.reactnative
 import com.facebook.react.bridge.JSBundleLoader
 import com.facebook.react.bridge.JSBundleLoaderDelegate
 import com.hotcodepush.core.Core
+import com.hotcodepush.core.SharedPreferencesStore
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,7 +26,7 @@ import java.io.File
 class HotCodePushRuntimeTest {
     private val context = contextWithResourceFile()
     private val runtime = HotCodePushRuntime(context)
-    private val bundleLoader = ReactNativeBundleLoader(context, File(context.filesDir, "hotcodepush")) {}
+    private val bundleLoader = ReactNativeBundleLoader(context, SharedPreferencesStore(context), File(context.filesDir, "hotcodepush")) {}
     private val embeddedBundleLoader = JSBundleLoader.createAssetLoader(context, EMBEDDED_BUNDLE_URL, true)
 
     @Test

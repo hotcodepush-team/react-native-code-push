@@ -20,6 +20,7 @@ import com.hotcodepush.core.DeviceFacts
 import com.hotcodepush.core.DownloadProgressEvent
 import com.hotcodepush.core.FileStore
 import com.hotcodepush.core.HandlerScheduler
+import com.hotcodepush.core.SharedPreferencesStore
 import com.hotcodepush.core.UpdateAvailableEvent
 import com.hotcodepush.core.UpdateDownloadedEvent
 import com.hotcodepush.core.UpdateFailedEvent
@@ -43,7 +44,7 @@ interface HotCodePushEventSink {
 class HotCodePushRuntime internal constructor(private val context: Context) : CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val loader = ReactNativeBundleLoader(context, FileStore.defaultRootDirectory(context), ::reloadReactNative)
+    private val loader = ReactNativeBundleLoader(context, SharedPreferencesStore(context), FileStore.defaultRootDirectory(context), ::reloadReactNative)
 
     @Volatile private var core: Core? = null
 

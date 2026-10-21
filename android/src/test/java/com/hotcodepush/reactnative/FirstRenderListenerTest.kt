@@ -9,6 +9,7 @@ import com.facebook.react.bridge.UIManager
 import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.uimanager.ReactRoot
 import com.facebook.react.uimanager.common.UIManagerType
+import com.hotcodepush.core.SharedPreferencesStore
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,7 +35,7 @@ class FirstRenderListenerTest {
     private val reactRoot = TestReactRoot(context)
     private val uiManager: UIManager = mock(UIManager::class.java)
     private var requestedReloads = 0
-    private val loader = ReactNativeBundleLoader(context, File(context.filesDir, "hotcodepush")) { requestedReloads++ }
+    private val loader = ReactNativeBundleLoader(context, SharedPreferencesStore(context), File(context.filesDir, "hotcodepush")) { requestedReloads++ }
     private var renders = 0
 
     @Test
