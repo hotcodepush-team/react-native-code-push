@@ -62,7 +62,8 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - Statuses and reasons are `SCREAMING_SNAKE_CASE` from the one catalog; a method throws a plain error only for a programming mistake, and rejects with one error where the native module is missing, on the web and in Expo Go.
 - Results are one shape per method and never throw for an outcome an app should handle.
 - The Codegen spec carries plain objects; `hot-code-push.ts` types them one layer up with `@hotcodepush/protocol`'s result and event types, so those stay the one definition.
-- Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update platform for Capacitor, React Native, Expo and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
+- Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update platform for React Native, Expo, Capacitor and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
+- Wherever the supported frameworks are listed, the order is React Native, Expo, Capacitor and Cordova, the larger communities first; this repository's own sentences lead with React Native.
 
 ## Agent workspace
 
