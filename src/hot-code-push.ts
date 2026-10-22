@@ -30,7 +30,7 @@ type NativeEventName = Exclude<HotCodePushEventName, 'updateRolledBack'>;
 type NativeSubscription = ReturnType<Spec['onUpdateAvailable']>;
 
 const NATIVE_MODULE_MISSING_MESSAGE =
-  'Live updates need a development or release build; they are not available on the web or in Expo Go.';
+  'Over-the-air (OTA) updates need a development or release build; they are not available on the web or in Expo Go.';
 
 const cycleListeners = new Set<CycleListener>();
 const subscriptions = new Set<NativeSubscription>();
@@ -89,7 +89,7 @@ export interface HotCodePush {
 
 /**
  * The SDK over the native module. Without it, on the web and in Expo Go, every method rejects with the one error that
- * names the build live updates need.
+ * names the build OTA updates need.
  */
 export const HotCodePush: HotCodePush = {
   addListener: async (eventName, listener) =>

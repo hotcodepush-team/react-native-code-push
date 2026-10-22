@@ -211,7 +211,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     }
 
     companion object {
-        private const val NOT_SERVED_MESSAGE = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs HotCodePushReactHost.getDefaultReactHost in MainApplication, which `npx hotcodepush doctor` checks."
+        private const val NOT_SERVED_MESSAGE = "React Native did not ask HotCodePush for its bundle, so over-the-air (OTA) updates are off in this run: Metro serves a debug build, and any other build needs HotCodePushReactHost.getDefaultReactHost in MainApplication, which `npx hotcodepush doctor` checks."
         private const val RELOAD_REASON = "HotCodePush"
         private const val START_FAILED_MESSAGE = "HotCodePush could not answer which bundle React Native runs, so the embedded bundle runs."
         private const val TAG = "HotCodePush"

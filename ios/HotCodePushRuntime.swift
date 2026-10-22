@@ -14,7 +14,7 @@ import React
     @objc public static let shared = HotCodePushRuntime()
 
     private static let contentDidAppearNotification = Notification.Name("RCTContentDidAppearNotification")
-    private static let notServedMessage = "React Native did not ask HotCodePush for its bundle, so live updates are off in this run: Metro serves a debug build, and any other build needs `HotCodePush.bundleURL()` in the file that overrides `bundleURL()`, which `npx hotcodepush doctor` checks."
+    private static let notServedMessage = "React Native did not ask HotCodePush for its bundle, so over-the-air (OTA) updates are off in this run: Metro serves a debug build, and any other build needs `HotCodePush.bundleURL()` in the file that overrides `bundleURL()`, which `npx hotcodepush doctor` checks."
 
     private enum Method: String {
         case applyUpdate, checkForUpdate, clearUpdates, consumeUpdateRolledBack, downloadUpdate, getChannel, getDevice, getState

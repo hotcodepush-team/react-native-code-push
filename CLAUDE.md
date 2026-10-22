@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-The HotCodePush React Native SDK: `@hotcodepush/react-native-code-push`, the Turbo Module that delivers live updates to React Native apps on iOS and Android.
+The HotCodePush React Native SDK: `@hotcodepush/react-native-code-push`, the Turbo Module that delivers over-the-air (OTA) updates to React Native apps on iOS and Android.
 Stack: TypeScript for the JavaScript surface and the Codegen spec, Swift and Objective-C++ on iOS, Kotlin on Android, React Native 0.82 and newer on the New Architecture only.
 
 The plan is the private `handbook` repo, checked out beside this one: `../handbook/docs/`.
