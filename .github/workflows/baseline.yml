@@ -29,10 +29,10 @@ jobs:
           repository: hotcodepush-team/react-native-code-push-demo
           ref: ${{ steps.baseline.outputs.demo }}
           path: demo
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: package/.nvmrc
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: zulu
           java-version: ${{ env.JAVA_VERSION }}
