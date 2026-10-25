@@ -62,11 +62,11 @@ export interface HotCodePush {
   applyUpdate(): Promise<ApplyUpdateResult>;
   /** Ends the readiness gate when `readySignal` is `manual`; safe to call at any time on any setting. */
   notifyReady(): Promise<NotifyReadyResult>;
-  /** Rolls the running release back now, marks its bundle as failed on this device, reports `APP_REQUESTED`, reloads. */
+  /** Rolls the running release back now, marks its bundle as failed on this device, reports `app_requested`, reloads. */
   rollbackUpdate(options?: RollbackUpdateOptions): Promise<void>;
   /** Clears every downloaded update and the list of failed bundles, keeps the channel and the attributes, reloads. */
   clearUpdates(): Promise<void>;
-  /** Restart gating: `isAllowed: false` holds the one restart the SDK would perform on its own — after an `immediate` apply, a `next-resume` apply or a mandatory release alike — until `isAllowed: true` runs it. A restart the app asks for itself, `applyUpdate()`, `rollbackUpdate()` or `clearUpdates()`, is never held. Not persisted: every start begins allowed. */
+  /** Restart gating: `isAllowed: false` holds the one restart the SDK would perform on its own — after an `immediate` apply, a `next_resume` apply or a mandatory release alike — until `isAllowed: true` runs it. A restart the app asks for itself, `applyUpdate()`, `rollbackUpdate()` or `clearUpdates()`, is never held. Not persisted: every start begins allowed. */
   setRestartAllowed(options: SetRestartAllowedOptions): Promise<void>;
   /** The SDK's state, a snapshot. */
   getState(): Promise<GetStateResult>;

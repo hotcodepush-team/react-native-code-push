@@ -58,7 +58,7 @@ pod 'HotCodePushCore', :git => 'https://github.com/hotcodepush-team/core-ios.git
 
 On Android the Gradle file above adds core-android's `maven` branch, where the pinned commit is published, to the app's repositories.
 
-A debug build asks Metro for its JavaScript, so OTA updates are off there and every result says `SKIPPED` with `BUILD_DEBUG`; the build step runs in it too and writes a `hotcodepush.json` that names no embedded bundle, without a login. Try an update in a release build.
+A debug build asks Metro for its JavaScript, so OTA updates are off there and every result says `skipped` with `build_debug`; the build step runs in it too and writes a `hotcodepush.json` that names no embedded bundle, without a login. Try an update in a release build.
 
 On the web, and in a host without the native module such as Expo Go, the package loads and every method rejects with an error that names the build OTA updates need.
 
@@ -68,7 +68,7 @@ On the web, and in a host without the native module such as Expo Go, the package
 import { HotCodePush, useUpdates } from '@hotcodepush/react-native-code-push';
 
 const result = await HotCodePush.sync();
-if (result.status === 'DOWNLOADED') {
+if (result.status === 'downloaded') {
   console.log(
     `release #${result.release.number} applies at ${result.applyStrategy}`,
   );

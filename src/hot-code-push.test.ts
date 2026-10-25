@@ -22,7 +22,7 @@ const UPDATE_ROLLED_BACK_EVENT: UpdateRolledBackEvent = {
     isMandatory: false,
     number: 43,
   },
-  reason: 'READINESS_TIMED_OUT',
+  reason: 'readiness_timed_out',
   toRelease: null,
 };
 
@@ -122,7 +122,7 @@ describe('HotCodePush', () => {
     it('should pass the apply strategies to the native downloadUpdate', async () => {
       vi.mocked(NativeHotCodePush.downloadUpdate).mockResolvedValue({
         release: null,
-        status: 'UP_TO_DATE',
+        status: 'up_to_date',
       });
 
       await HotCodePush.downloadUpdate({ applyStrategy: 'manual' });
@@ -135,7 +135,7 @@ describe('HotCodePush', () => {
     it('should pass an empty object when called without options', async () => {
       vi.mocked(NativeHotCodePush.downloadUpdate).mockResolvedValue({
         release: null,
-        status: 'UP_TO_DATE',
+        status: 'up_to_date',
       });
 
       await HotCodePush.downloadUpdate();
@@ -156,7 +156,7 @@ describe('HotCodePush', () => {
       const unsubscribe = subscribeToRunningCycles(count => counts.push(count));
 
       const syncing = HotCodePush.sync();
-      resolveSync({ release: null, status: 'UP_TO_DATE' });
+      resolveSync({ release: null, status: 'up_to_date' });
       await syncing;
       unsubscribe();
 
@@ -179,7 +179,7 @@ describe('HotCodePush', () => {
     it('should pass an empty object when called without options', async () => {
       vi.mocked(NativeHotCodePush.sync).mockResolvedValue({
         release: null,
-        status: 'UP_TO_DATE',
+        status: 'up_to_date',
       });
 
       await HotCodePush.sync();
