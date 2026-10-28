@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Copies the demo app into a scratch directory as one of the two variants the baseline compares:
-// `with` installs the package tarball and pins the pod at the commit the package names, so the native code
-// compiles against its own core; `without` removes the package and every line `init` wired
-// and swaps the screen for the same screen with nothing behind it. Both log the first paint.
+// `with` installs the package tarball, whose pod carries its own core; `without` removes the package and every line
+// `init` wired and swaps the screen for the same screen with nothing behind it. Both log the first paint.
 import { execFileSync } from 'node:child_process';
 import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,8 +20,8 @@ if (
 }
 
 const PACKAGE_NAME = '@hotcodepush/react-native-code-push';
-// The core's pod in the demo's Podfile, pinned by `:git` and `:commit` until it is published.
-const CORE_POD_LINE = /^( *)pod 'HotCodePush\w+', :git => .*\n/m;
+// The core's own pod, which the demo's Podfile may still pin from before the package's pod carried the core.
+const CORE_POD_LINE = /^ *pod 'HotCodePushCore'.*\n/m;
 const excluded = new Set([
   '.git',
   '.gradle',
@@ -48,18 +47,6 @@ if (variant === 'with') {
     ),
   );
   run('npm', ['install', tarball, '--no-audit', '--no-fund']);
-  const installedPackage = JSON.parse(
-    readFileSync(
-      join(target, 'node_modules', PACKAGE_NAME, 'package.json'),
-      'utf8',
-    ),
-  );
-  editFile('ios/Podfile', text =>
-    text.replace(
-      CORE_POD_LINE,
-      `$1pod 'HotCodePushCore', :git => 'https://github.com/hotcodepush-team/core-ios.git', :commit => '${installedPackage.hotcodepush.coreIos}'\n`,
-    ),
-  );
 } else {
   run('npm', ['uninstall', PACKAGE_NAME, '--no-audit', '--no-fund']);
   editFile('android/app/build.gradle', text =>
@@ -83,7 +70,6 @@ if (variant === 'with') {
         'com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost',
       ),
   );
-  editFile('ios/Podfile', text => text.replace(CORE_POD_LINE, ''));
   writeFileSync(
     join(target, 'App.tsx'),
     `// The demo without the package: the same screen, nothing behind it — the baseline's control.
@@ -159,6 +145,7 @@ const styles = StyleSheet.create({
 `,
   );
 }
+editFile('ios/Podfile', text => text.replace(CORE_POD_LINE, ''));
 if (process.platform === 'darwin') {
   run('pod', ['install'], join(target, 'ios'));
 }

@@ -31,8 +31,10 @@
     "android/src/main/",
     "dist/",
     "ios/",
+    "!ios/Frameworks/HotCodePushCore.checksum",
     "scripts/",
     "!scripts/*.test.ts",
+    "!scripts/download-core-ios.mjs",
     "!scripts/write-sdk-version.mjs",
     "src/",
     "!src/**/*.test.ts",
@@ -40,7 +42,7 @@
     "HotcodepushReactNativeCodePush.podspec"
   ],
   "scripts": {
-    "build": "npm run clean && node scripts/write-sdk-version.mjs && tsc --project tsconfig.build.json",
+    "build": "npm run clean && node scripts/write-sdk-version.mjs && node scripts/download-core-ios.mjs && tsc --project tsconfig.build.json",
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet ios",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
@@ -63,7 +65,10 @@
     }
   },
   "hotcodepush": {
-    "coreIos": "906073c537d9651a91ef644d4ca694e1642dc69f"
+    "coreIos": {
+      "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.1.0/HotCodePushCore.xcframework.zip",
+      "checksum": "a545ca21afa9ffb791484e17fbd2ea49e1f28340931cc5fe0526791debab4d1f"
+    }
   },
   "dependencies": {
     "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@313a015"

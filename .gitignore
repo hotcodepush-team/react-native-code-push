@@ -6,6 +6,9 @@ node_modules
 android/src/main/java/com/hotcodepush/reactnative/SdkVersion.kt
 ios/SdkVersion.swift
 
+# The core's XCFramework, downloaded by every build
+ios/Frameworks
+
 # iOS
 .build
 .swiftpm

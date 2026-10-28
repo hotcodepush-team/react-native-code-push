@@ -14,7 +14,8 @@ npm install --save-dev https://pkg.pr.new/hotcodepush-team/cli/hotcodepush@<sha>
 ```
 
 The module supports React Native 0.82 and later on the New Architecture, iOS 15.1 and Android 7.0 (API 24).
-The manual wiring, `HotCodePush.bundleURL()` on iOS, the SDK's `getDefaultReactHost` on Android, the build phase and the Gradle line, is in the [docs](https://hotcodepush.com/docs/react-native).
+The manual wiring, `HotCodePush.bundleURL()` on iOS, the SDK's `getDefaultReactHost` on Android, the build phase and the Gradle line, is in the [docs](https://hotcodepush.com/docs/sdks/react-native).
+The pod carries the iOS core, `HotCodePushCore`, as a prebuilt framework, so the Podfile needs no line for it.
 
 Every native build writes `hotcodepush.json` into the app; an Xcode archive or a Gradle release build also registers the store build in HotCodePush, so it needs `npx hotcodepush login` or `HOTCODEPUSH_TOKEN`.
 A debug build loads its JavaScript from Metro, so OTA updates are off there: try an update in a release build.
@@ -49,14 +50,14 @@ Set `downloadStrategy` or `applyStrategy` to `manual` and call `downloadUpdate()
 
 ## Documentation
 
-See [hotcodepush.com/docs/react-native](https://hotcodepush.com/docs/react-native) for the configuration, methods, events, types and reasons.
+See [hotcodepush.com/docs/sdks/react-native](https://hotcodepush.com/docs/sdks/react-native) for the configuration, methods, events, types and reasons.
 
 ## Development
 
 ```sh
 nvm use
 npm ci
-npm run build            # the TypeScript into dist/; run it before opening the native projects
+npm run build            # the TypeScript into dist/ and the iOS core into ios/Frameworks; run it before opening the native projects
 npm test
 npm run lint && npm run typecheck
 npm run verify:android   # the Android library's build and Robolectric tests
@@ -70,4 +71,4 @@ The cores and their tests live in [core-ios](https://github.com/hotcodepush-team
 ## License
 
 See [LICENSE](./LICENSE).
-An app that ships the plugin also ships the native cores' third-party code: FreeBSD's bspatch (BSD 2-clause) on both platforms and bzip2 1.0.8 on Android. Reproduce the notices from [core-ios](https://github.com/hotcodepush-team/core-ios/blob/main/THIRD-PARTY-NOTICES) and [core-android](https://github.com/hotcodepush-team/core-android/blob/main/THIRD-PARTY-NOTICES) in your app's distribution.
+An app that ships the module also ships the native cores' third-party code: FreeBSD's bspatch (BSD 2-clause) on both platforms and bzip2 1.0.8 on Android. Reproduce the notices from [core-ios](https://github.com/hotcodepush-team/core-ios/blob/main/THIRD-PARTY-NOTICES) and [core-android](https://github.com/hotcodepush-team/core-android/blob/main/THIRD-PARTY-NOTICES) in your app's distribution.
