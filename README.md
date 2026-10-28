@@ -14,7 +14,7 @@ npm install --save-dev https://pkg.pr.new/hotcodepush-team/cli/hotcodepush@<sha>
 ```
 
 The module supports React Native 0.82 and later on the New Architecture, iOS 15.1 and Android 7.0 (API 24).
-The manual wiring, `HotCodePush.bundleURL()` on iOS, the SDK's `getDefaultReactHost` on Android, the build phase and the Gradle line, is in the [docs](https://hotcodepush.com/docs/react-native).
+The manual wiring, `HotCodePush.bundleURL()` on iOS, the SDK's `getDefaultReactHost` on Android, the build phase and the Gradle line, is in the [docs](https://hotcodepush.com/docs/sdks/react-native).
 The pod carries the iOS core, `HotCodePushCore`, as a prebuilt framework, so the Podfile needs no line for it.
 
 Every native build writes `hotcodepush.json` into the app; an Xcode archive or a Gradle release build also registers the store build in HotCodePush, so it needs `npx hotcodepush login` or `HOTCODEPUSH_TOKEN`.
@@ -50,7 +50,7 @@ Set `downloadStrategy` or `applyStrategy` to `manual` and call `downloadUpdate()
 
 ## Documentation
 
-See [hotcodepush.com/docs/react-native](https://hotcodepush.com/docs/react-native) for the configuration, methods, events, types and reasons.
+See [hotcodepush.com/docs/sdks/react-native](https://hotcodepush.com/docs/sdks/react-native) for the configuration, methods, events, types and reasons.
 
 ## Development
 
