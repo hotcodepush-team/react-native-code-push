@@ -2,6 +2,13 @@ import Foundation
 import HotCodePushCore
 import React
 
+// The core ships prebuilt in Release, so the app's debug flag is read here, where the SDK compiles with the app.
+#if DEBUG
+private let isDebugBuild = true
+#else
+private let isDebugBuild = false
+#endif
+
 /// What the runtime hands the Turbo Module: an event to emit to JavaScript.
 @objc public protocol HotCodePushEventSink: AnyObject {
     func emitEvent(_ eventName: String, payload: [String: Any])
@@ -114,7 +121,7 @@ import React
             NSLog("[HotCodePush] %@", notConfiguredMessage)
             return nil
         }
-        var device = DeviceFacts.current(sdkVersion: sdkVersion)
+        var device = DeviceFacts.current(sdkVersion: sdkVersion, isDebugBuild: isDebugBuild)
         // A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off.
         if !isServedBySdk {
             configuration.isEnabledInDebugBuilds = false

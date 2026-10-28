@@ -17,10 +17,11 @@ android/src/test/java/com/hotcodepush/reactnative  the Robolectric tests of the 
 android/settings.gradle                             the library's own build, which takes React Native's Gradle plugin and react-android's version from node_modules
 android/hotcodepush.gradle                         the task that runs binary create for every variant, and core-android's maven branch among `:app`'s repositories; applied by the app's build.gradle
 scripts/binary-create-xcode.sh                     binary create as the app's Xcode phase runs it
+scripts/download-core-ios.mjs                      the core's XCFramework into the ignored ios/Frameworks, which the pod vendors
 benchmarks/                                        the size and cold-start baseline, measured on the demo
 ```
 
-The native cores live in `core-ios` and `core-android`, consumed at pinned commits: the pod through the app's Podfile by `:git` and `:commit`, the commit named in `package.json` under `hotcodepush.coreIos`, and the Android library from core-android's `maven` branch by full sha in `android/build.gradle`; a core change lands there first and arrives here as a bump of both pins.
+The native cores live in `core-ios` and `core-android`. `core-ios` is the XCFramework of a release: `package.json` pins its URL and checksum under `hotcodepush.coreIos`, and `scripts/download-core-ios.mjs` unpacks it into the ignored `ios/Frameworks` for the pod's `vendored_frameworks`, so the app's Podfile names no core. The Android library comes from core-android's `maven` branch by full sha in `android/build.gradle`; a core change lands there first and arrives here as a bump of both pins.
 This package keeps what is React Native's: which bundle the host loads, the reload, the readiness signal and the bridge. Nothing of the protocol lives here.
 
 ## How the SDK meets React Native
@@ -36,17 +37,17 @@ This package keeps what is React Native's: which bundle the host loads, the relo
 
 ## Commands
 
-| Command                  | Does                                                                                                                                                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run lint`           | ESLint, Prettier and SwiftLint                                                                                                                                                                    |
-| `npm run typecheck`      | TypeScript                                                                                                                                                                                        |
-| `npm test`               | Vitest over the JavaScript                                                                                                                                                                        |
-| `npm run build`          | the TypeScript into `dist/`; writes the SDK version from `package.json` into `SdkVersion.swift` and `SdkVersion.kt`, both ignored, so a fresh checkout runs it before opening the native projects |
-| `npm run verify`         | lint, typecheck, the Vitest tests and the build                                                                                                                                                   |
-| `npm run verify:android` | Gradle builds, lints and unit-tests the Android library on its own, Robolectric; needs a JDK and the Android SDK                                                                                  |
+| Command                  | Does                                                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`           | ESLint, Prettier and SwiftLint                                                                                                                                                                                                        |
+| `npm run typecheck`      | TypeScript                                                                                                                                                                                                                            |
+| `npm test`               | Vitest over the JavaScript                                                                                                                                                                                                            |
+| `npm run build`          | the TypeScript into `dist/`; writes the SDK version from `package.json` into `SdkVersion.swift` and `SdkVersion.kt` and downloads the core's XCFramework, all ignored, so a fresh checkout runs it before opening the native projects |
+| `npm run verify`         | lint, typecheck, the Vitest tests and the build                                                                                                                                                                                       |
+| `npm run verify:android` | Gradle builds, lints and unit-tests the Android library on its own, Robolectric; needs a JDK and the Android SDK                                                                                                                      |
 
 Run `npm run fmt` before every commit.
-The iOS code compiles only inside an app: `ci.yml` builds the demo with the package from the commit, the demo's pod pinned at the package's own `hotcodepush.coreIos` by `benchmarks/prepare-demo.mjs`. The Android library also builds on its own: `android/settings.gradle` resolves React Native from the devDependency, so Codegen runs on the host, and `verify:android` runs its Robolectric tests in their own `ci.yml` job.
+The iOS code compiles only inside an app: `ci.yml` builds the demo with the package from the commit, packed after `npm run build` so the pod carries the core; `benchmarks/prepare-demo.mjs` drops a core pod line the demo's Podfile still pins. The Android library also builds on its own: `android/settings.gradle` resolves React Native from the devDependency, so Codegen runs on the host, and `verify:android` runs its Robolectric tests in their own `ci.yml` job.
 
 ## Dependencies during the build phase
 
