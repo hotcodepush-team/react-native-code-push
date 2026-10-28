@@ -26,12 +26,20 @@ import { HotCodePush, useUpdates } from '@hotcodepush/react-native-code-push';
 
 const result = await HotCodePush.sync();
 if (result.status === 'downloaded') {
-  console.log(`release #${result.release.number} applies at ${result.applyStrategy}`);
+  console.log(
+    `release #${result.release.number} applies at ${result.applyStrategy}`,
+  );
 }
 
 function ReleaseLabel() {
   const { isSyncing, state } = useUpdates();
-  return <Text>{isSyncing ? 'syncing…' : (state.currentRelease?.bundleVersion ?? 'embedded')}</Text>;
+  return (
+    <Text>
+      {isSyncing
+        ? 'syncing…'
+        : (state.currentRelease?.bundleVersion ?? 'embedded')}
+    </Text>
+  );
 }
 ```
 
