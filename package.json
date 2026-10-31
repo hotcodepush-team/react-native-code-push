@@ -66,8 +66,8 @@
   },
   "hotcodepush": {
     "coreIos": {
-      "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.1.0/HotCodePushCore.xcframework.zip",
-      "checksum": "a545ca21afa9ffb791484e17fbd2ea49e1f28340931cc5fe0526791debab4d1f"
+      "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.2.0/HotCodePushCore.xcframework.zip",
+      "checksum": "cb33348bd301eebcbae22532efb235e2136141f18a35b6fc190bc1724641c0bf"
     }
   },
   "dependencies": {
