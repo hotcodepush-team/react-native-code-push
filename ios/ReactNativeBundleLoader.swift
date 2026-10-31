@@ -2,10 +2,9 @@ import Foundation
 import HotCodePushCore
 import React
 
-/// React Native loads the JavaScript its host is handed: a bundle is laid out by path under the store's `served`
-/// directory, the host asks for the served one through `HotCodePush.bundleURL()`, and a switch is a reload of the host.
+// React Native loads the JavaScript its host is handed, so a switch is a reload of the host.
+// Bundles live under the `served` directory of the store, and a `nil` bundle ID means the embedded bundle.
 final class ReactNativeBundleLoader: BundleLoader {
-    /// The bundle a reload the SDK asked for runs, `nil` for the embedded one.
     struct RequestedReload {
         let bundleId: String?
     }
@@ -24,7 +23,7 @@ final class ReactNativeBundleLoader: BundleLoader {
     private var requestedReload: RequestedReload?
     private var _runningBundleId: String?
 
-    /// The store is the core's own, so the bundle to serve at the next start lies beside the state it belongs to.
+    // The store is the core's own, so the bundle for the next start lies beside the state it belongs to.
     init(store: KeyValueStore, storeDirectory: URL) {
         self.store = store
         servedDirectory = storeDirectory.appendingPathComponent("served", isDirectory: true)
@@ -34,8 +33,8 @@ final class ReactNativeBundleLoader: BundleLoader {
         return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
     }
 
-    /// The host asks for its bundle, at the start and at every reload: until it is served one, the core's choice is persisted and never
-    /// reloaded into. Answers the reload the SDK asked for, `nil` at the start and for a reload the SDK did not ask for.
+    // Called at the start and at every reload. Until the host is served, the core's choice is persisted but never reloaded into.
+    // Returns `nil` at the start and for a reload the SDK did not ask for.
     func beginBundleRequest() -> RequestedReload? {
         lock.lock()
         defer { lock.unlock() }
@@ -45,21 +44,21 @@ final class ReactNativeBundleLoader: BundleLoader {
         return requested
     }
 
-    /// A reload the SDK asked for has not reached the host yet: whatever renders until it does is the instance the reload replaces.
+    // Until the requested reload reaches the host, whatever renders is the instance the reload replaces.
     var isReloadPending: Bool {
         lock.lock()
         defer { lock.unlock() }
         return requestedReload != nil
     }
 
-    /// The bundle the host runs, `nil` the embedded one: the one it was served last, which a bundle request leaves as it is.
+    // The bundle served last. A bundle request does not change it.
     var runningBundleId: String? {
         lock.lock()
         defer { lock.unlock() }
         return _runningBundleId
     }
 
-    /// The host runs the bundle from now on, `nil` the embedded one: answers its file, none while the bundle's JavaScript is not on disk.
+    // Returns `nil` while the JavaScript of the bundle is not on disk.
     func serveBundle(bundleId: String?) -> URL? {
         let url = bundleId.map(bundleFileURL(bundleId:)).flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
         lock.lock()
@@ -81,7 +80,7 @@ final class ReactNativeBundleLoader: BundleLoader {
         store.set(bundleId, forKey: ReactNativeBundleLoader.servedBundleIdKey)
     }
 
-    /// A host that is not running yet is served the core's answer when it asks; a running one reloads into the bundle.
+    // A host that is not running yet gets the bundle when it asks. A running host reloads into it.
     func loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId: bundleId)
         lock.lock()
@@ -110,7 +109,7 @@ final class ReactNativeBundleLoader: BundleLoader {
         return projectionDirectory(bundleId: bundleId).appendingPathComponent(ReactNativeBundleLoader.bundleFileName)
     }
 
-    /// The persisted bundle counts only while its JavaScript is on disk; anything else is the embedded bundle.
+    // The persisted bundle counts only while its JavaScript is on disk. Otherwise the embedded bundle runs.
     private func persistedBundleId() -> String? {
         guard let bundleId = store.string(forKey: ReactNativeBundleLoader.servedBundleIdKey),
               FileManager.default.fileExists(atPath: bundleFileURL(bundleId: bundleId).path) else {

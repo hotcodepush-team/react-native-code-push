@@ -21,7 +21,7 @@
   return self;
 }
 
-/// A reload ends this module's JavaScript and the callback its emit methods call: the runtime stops emitting through it.
+// A reload ends the JavaScript of this module, so the runtime stops emitting through it.
 - (void)invalidate
 {
   [HotCodePushRuntime.shared detach:self];
@@ -37,8 +37,6 @@
 {
   return std::make_shared<facebook::react::NativeHotCodePushSpecJSI>(params);
 }
-
-#pragma mark - Methods
 
 - (void)applyUpdate:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
 {
@@ -136,11 +134,9 @@
                              }];
 }
 
-#pragma mark - HotCodePushEventSink
-
 - (void)emitEvent:(NSString *)eventName payload:(NSDictionary<NSString *, id> *)payload
 {
-  // React Native hands the module its emitter callback after init; an event before that has no JavaScript listening yet.
+  // React Native sets the emitter callback after init. Before that, no JavaScript listens.
   if (!_eventEmitterCallback) {
     return;
   }

@@ -1,15 +1,13 @@
 import type { CodegenTypes, TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
 
-/**
- * The Turbo Module as Codegen reads it. Every result and every event crosses as a plain object and is typed
- * one layer up by `@hotcodepush/protocol`, so the shared types stay the one definition of the results and events.
- */
+// Results and events cross as plain objects. `hot-code-push.ts` types them with `@hotcodepush/protocol`,
+// so the shared types stay the one definition.
 export interface Spec extends TurboModule {
   applyUpdate(): Promise<CodegenTypes.UnsafeObject>;
   checkForUpdate(): Promise<CodegenTypes.UnsafeObject>;
   clearUpdates(): Promise<void>;
-  /** The `updateRolledBack` event the native side kept for the start that follows the rollback, handed out once. */
+  // Returns the kept `updateRolledBack` event once.
   consumeUpdateRolledBack(): Promise<CodegenTypes.UnsafeObject>;
   downloadUpdate(
     options: CodegenTypes.UnsafeObject,
@@ -31,5 +29,5 @@ export interface Spec extends TurboModule {
   readonly onUpdateFailed: CodegenTypes.EventEmitter<CodegenTypes.UnsafeObject>;
 }
 
-// null in a host that carries no native module of ours, Expo Go; the web resolves NativeHotCodePush.web.ts
+// Null in a host without our native module, such as Expo Go. The web resolves NativeHotCodePush.web.ts instead.
 export default TurboModuleRegistry.get<Spec>('HotCodePush');

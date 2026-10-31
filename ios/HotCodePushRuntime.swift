@@ -9,14 +9,12 @@ private let isDebugBuild = true
 private let isDebugBuild = false
 #endif
 
-/// What the runtime hands the Turbo Module: an event to emit to JavaScript.
 @objc public protocol HotCodePushEventSink: AnyObject {
     func emitEvent(_ eventName: String, payload: [String: Any])
 }
 
-/// The SDK inside the process, one per app: it starts the core when React Native asks for its bundle, so the start's
-/// verdict — the pending switch, the rollback of a release that never became ready — is in before any JavaScript runs,
-/// and the Turbo Module of every JavaScript instance since talks to that one core.
+// The core starts when React Native first asks for its bundle, so a pending switch or rollback is decided before any JavaScript runs.
+// The Turbo Module of every later JavaScript instance talks to that one core.
 @objc public final class HotCodePushRuntime: NSObject {
     @objc public static let shared = HotCodePushRuntime()
 
@@ -33,7 +31,6 @@ private let isDebugBuild = false
 
     private var core: Core?
     private var isStarted = false
-    /// Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it.
     private var notConfiguredMessage = Configuration.missingMessage
     private var retainedUpdateRolledBackEvent: [String: Any]?
     private weak var eventSink: HotCodePushEventSink?
@@ -42,15 +39,13 @@ private let isDebugBuild = false
         super.init()
     }
 
-    // MARK: The host
-
-    /// What React Native loads, asked at every start and reload: the served bundle's file, else the `main.jsbundle` the binary ships.
+    // React Native asks at every start and every reload.
     func resolveBundleURL() -> URL? {
         return loader.serveBundle(bundleId: resolveServedBundleId()) ?? ReactNativeBundleLoader.embeddedBundleURL
     }
 
-    /// The bundle the new JavaScript instance runs: the start's answer, the bundle of a reload the SDK asked for, else the running one.
-    /// A reload the SDK did not ask for — `DevSettings.reload()`, react-native-restart, a development reload — serves the running bundle and the core is not told.
+    // A reload the SDK did not ask for, such as `DevSettings.reload()`, react-native-restart or a development reload,
+    // serves the running bundle without telling the core.
     private func resolveServedBundleId() -> String? {
         let requestedReload = loader.beginBundleRequest()
         if claimStart() {
@@ -62,9 +57,7 @@ private let isDebugBuild = false
         return loader.runningBundleId
     }
 
-    // MARK: The Turbo Module
-
-    /// The module of the JavaScript instance that runs now; a reload replaces it.
+    // A reload replaces the module, so only the latest one receives events.
     @objc public func attach(_ eventSink: HotCodePushEventSink) {
         self.eventSink = eventSink
         guard claimStart(), let core = createCore(isServedBySdk: false) else { return }
@@ -97,10 +90,8 @@ private let isDebugBuild = false
         }
     }
 
-    // MARK: The start
-
-    /// Whether the caller starts the core, once per process: the host at its first question for its bundle, which waits for the start's
-    /// answer at most `Core.startTimeout`, or the module of a host that never asked, which runs JavaScript the SDK does not serve.
+    // The core starts once per process: from the first bundle request, which waits up to `Core.startTimeout`,
+    // or from the module of a host that never asked and so runs JavaScript the SDK does not serve.
     private func claimStart() -> Bool {
         lock.lock()
         defer { lock.unlock() }
@@ -122,7 +113,7 @@ private let isDebugBuild = false
             return nil
         }
         var device = DeviceFacts.current(sdkVersion: sdkVersion, isDebugBuild: isDebugBuild)
-        // A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off.
+        // The SDK does not serve this run's JavaScript, so it counts as a debug build and `isEnabledInDebugBuilds` is off.
         if !isServedBySdk {
             configuration.isEnabledInDebugBuilds = false
             device.isDebugBuild = true
@@ -141,15 +132,12 @@ private let isDebugBuild = false
         return core
     }
 
-    /// The first frame after the root view renders: the readiness signal `render`, and whatever `readySignal` is, the
-    /// moment the app is up in this run, which the core's own restarts wait for. Every reload renders a new root; a frame
-    /// while a reload the SDK asked for is pending is the replaced instance's and signals nothing.
+    // The first frame after the root view renders is the `render` readiness signal and, for any `readySignal`, the moment the core's restarts wait for.
+    // While a reload the SDK asked for is pending, the frame belongs to the replaced instance and signals nothing.
     @objc private func handleContentDidAppear() {
         guard !loader.isReloadPending else { return }
         Task { await core?.handleRendered() }
     }
-
-    // MARK: Methods
 
     private func perform(_ method: Method, options: [String: Any], core: Core) async throws -> Any? {
         switch method {
@@ -212,14 +200,12 @@ private let isDebugBuild = false
         return nil
     }
 
-    /// The apply strategies for this call; a value outside its choices is a programming mistake and rejects the call.
     private static func downloadUpdateOptions(from options: [String: Any]) throws -> DownloadUpdateOptions {
         return DownloadUpdateOptions(
             applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
             mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
     }
 
-    /// Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call.
     private static func syncOptions(from options: [String: Any]) throws -> SyncOptions {
         return SyncOptions(
             applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
@@ -227,6 +213,7 @@ private let isDebugBuild = false
             mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
     }
 
+    // A value outside the choices is a programming mistake, so the call rejects.
     private static func option<T>(_ name: String, _ options: [String: Any], _ parse: (String) -> T?) throws -> T? {
         guard let raw = options[name] as? String else { return nil }
         guard let value = parse(raw) else { throw PlainError("\(name) is not one of its choices: \(raw)") }
@@ -239,14 +226,12 @@ private let isDebugBuild = false
         DebugScreenViewController.present(core: core, from: presenter)
     }
 
-    // MARK: Events
-
     fileprivate func emit<T: Encodable>(_ eventName: String, _ event: T) {
         guard let payload = try? Json.encodeObject(event) else { return }
         eventSink?.emitEvent(eventName, payload: payload)
     }
 
-    /// Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then.
+    // Kept until the JavaScript of the next start listens, since the instance that saw the rollback is gone by then.
     fileprivate func retainUpdateRolledBack(_ event: UpdateRolledBackEvent) {
         let payload = try? Json.encodeObject(event)
         lock.lock()
@@ -254,7 +239,7 @@ private let isDebugBuild = false
         lock.unlock()
     }
 
-    /// The kept `updateRolledBack` event, handed out once; `null` when no rollback preceded this start.
+    // Handed out once. The event is null when no rollback preceded this start.
     private func consumeUpdateRolledBack() -> [String: Any] {
         lock.lock()
         defer { lock.unlock() }
@@ -265,7 +250,6 @@ private let isDebugBuild = false
 
 }
 
-/// The core's five events on their way to JavaScript.
 private final class CoreEvents: CoreListener {
     private weak var runtime: HotCodePushRuntime?
 

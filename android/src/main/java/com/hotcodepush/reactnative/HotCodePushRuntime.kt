@@ -31,16 +31,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-/** What the runtime hands the Turbo Module: an event to emit to JavaScript. */
 interface HotCodePushEventSink {
     fun emitEvent(eventName: String, payload: JSONObject)
 }
 
-/**
- * The SDK inside the process, one per app: it starts the core when React Native asks for its bundle, so the start's
- * verdict — the pending switch, the rollback of a release that never became ready — is in before any JavaScript runs,
- * and the Turbo Module of every JavaScript instance since talks to that one core.
- */
+// The core starts when React Native first asks for its bundle, so a pending switch or rollback is decided before any JavaScript runs.
+// The Turbo Module of every later JavaScript instance talks to that one core.
 class HotCodePushRuntime internal constructor(private val context: Context) : CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -51,16 +47,10 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     @Volatile private var eventSink: HotCodePushEventSink? = null
     private var isStarted = false
 
-    /** Why there is no core, which every method rejects with: the resource file is missing, or the core's reader refused it. */
     @Volatile private var notConfiguredMessage = Configuration.MISSING_MESSAGE
     private var retainedUpdateRolledBackEvent: JSONObject? = null
 
-    // The host
-
-    /**
-     * What React Native loads, asked at every start and reload: the served bundle's file, else the bundle the binary ships.
-     * Nothing thrown on the way stops the host: it then runs the embedded bundle.
-     */
+    // React Native asks at every start and every reload. Any failure falls back to the embedded bundle, so the host always starts.
     fun resolveBundleLoader(embeddedBundleLoader: JSBundleLoader): JSBundleLoader {
         val bundleFile = try {
             loader.serveBundle(resolveServedBundleId())
@@ -71,21 +61,16 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         return bundleFile?.let { JSBundleLoader.createFileLoader(it.path) } ?: embeddedBundleLoader
     }
 
-    /**
-     * The bundle the new JavaScript instance runs: the start's answer, the bundle of a reload the SDK asked for, else the running one.
-     * A reload the SDK did not ask for — `DevSettings.reload()`, react-native-restart, a development reload — serves the running bundle and the core is not told.
-     */
+    // A reload the SDK did not ask for, such as `DevSettings.reload()`, react-native-restart or a development reload,
+    // serves the running bundle without telling the core.
     private fun resolveServedBundleId(): String? {
         val requestedReload = loader.beginBundleRequest()
         if (claimStart()) return createCore(isServedBySdk = true)?.handleAppStartBlocking(isHeadless = !ActivityManagerProcessState.isInForeground())
         return if (requestedReload != null) requestedReload.bundleId else loader.runningBundleId
     }
 
-    /**
-     * A JavaScript instance was created, at the start and at every reload: its first render, which [FirstRenderListener]
-     * observes, is the readiness signal `render`, and whatever `readySignal` is, the moment the app is up in this run,
-     * which the core's own restarts wait for.
-     */
+    // Called for each new JavaScript instance. Its first render is the `render` readiness signal and, for any `readySignal`,
+    // the moment the core's restarts wait for.
     @OptIn(UnstableReactNativeAPI::class)
     fun observeFirstRender(reactContext: ReactContext) {
         val uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC) ?: return
@@ -97,9 +82,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         scope.launch { core.handleRendered() }
     }
 
-    // The Turbo Module
-
-    /** The module of the JavaScript instance that runs now; a reload replaces it. */
+    // A reload replaces the module, so only the latest one receives events.
     fun attach(eventSink: HotCodePushEventSink) {
         this.eventSink = eventSink
         if (claimStart()) createCore(isServedBySdk = false)?.let { core -> scope.launch { core.handleAppStart() } }
@@ -127,12 +110,8 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     @Synchronized
     fun takeRetainedUpdateRolledBackEvent(): JSONObject? = retainedUpdateRolledBackEvent.also { retainedUpdateRolledBackEvent = null }
 
-    // The start
-
-    /**
-     * Whether the caller starts the core, once per process: the host at its first question for its bundle, which waits for the start's
-     * answer at most `Core.START_TIMEOUT`, or the module of a host that never asked, which runs JavaScript the SDK does not serve.
-     */
+    // The core starts once per process: from the first bundle request, which waits up to `Core.START_TIMEOUT`,
+    // or from the module of a host that never asked and so runs JavaScript the SDK does not serve.
     @Synchronized
     private fun claimStart(): Boolean {
         if (isStarted) return false
@@ -152,8 +131,8 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
             return null
         }
         if (!isServedBySdk) Log.w(TAG, NOT_SERVED_MESSAGE)
+        // A run whose JavaScript the SDK does not serve counts as a debug build, and `isEnabledInDebugBuilds` is off.
         val configuration = if (isServedBySdk) readConfiguration else readConfiguration.copy(isEnabledInDebugBuilds = false)
-        // A run whose JavaScript the SDK does not serve counts as a debug build, which `isEnabledInDebugBuilds` then switches off.
         val device = DeviceFacts.current(context, SDK_VERSION).let { if (isServedBySdk) it else it.copy(isDebugBuild = true) }
         val core = Core(
             context = context,
@@ -186,8 +165,6 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         (context.applicationContext as? ReactApplication)?.reactHost?.reload(RELOAD_REASON)
     }
 
-    // The listener
-
     override fun updateAvailable(event: UpdateAvailableEvent) {
         eventSink?.emitEvent("updateAvailable", event.toJson())
     }
@@ -204,7 +181,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         eventSink?.emitEvent("downloadProgress", event.toJson())
     }
 
-    /** Kept until the JavaScript of the start that follows the rollback listens: the instance that saw the rollback is gone by then. */
+    // Kept until the JavaScript of the next start listens, since the instance that saw the rollback is gone by then.
     @Synchronized
     override fun updateRolledBack(event: UpdateRolledBackEvent) {
         retainedUpdateRolledBackEvent = event.toJson()
@@ -223,7 +200,6 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     }
 }
 
-/** The two moments the runtime follows; the rest of the interface is noise it leaves empty. */
 private abstract class ActivityLifecycleObserver : Application.ActivityLifecycleCallbacks {
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
 

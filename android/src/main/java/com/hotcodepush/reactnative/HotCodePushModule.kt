@@ -16,7 +16,6 @@ import com.hotcodepush.core.SyncOptions
 import com.hotcodepush.core.SyncTrigger
 import org.json.JSONObject
 
-/** The Turbo Module `HotCodePush`: the JavaScript surface over [HotCodePushRuntime]. */
 class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePushSpec(reactContext), HotCodePushEventSink {
     private val runtime = HotCodePushRuntime.get(reactContext)
 
@@ -24,7 +23,6 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         runtime.attach(this)
     }
 
-    /** A reload replaces this instance with the module of the new JavaScript. */
     override fun invalidate() {
         runtime.detach(this)
         super.invalidate()
@@ -101,7 +99,6 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         }
     }
 
-    /** Opens the shared core's debug screen over the app's activity. */
     override fun showDebugScreen(promise: Promise) = runtime.invoke(promise) { core ->
         DebugScreen.show(reactApplicationContext.currentActivity ?: reactApplicationContext, core)
         null
@@ -110,7 +107,7 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
     override fun sync(options: ReadableMap, promise: Promise) = runtime.invoke(promise) { it.sync(SyncTrigger.MANUAL, syncOptions(options)).toJson() }
 
     override fun emitEvent(eventName: String, payload: JSONObject) {
-        // React Native hands the module its emitter callback after init; an event before that has no JavaScript listening yet.
+        // React Native sets the emitter callback after init. Before that, no JavaScript listens.
         if (mEventEmitterCallback == null) return
         val value = payload.toWritableMap()
         when (eventName) {
@@ -121,13 +118,11 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
         }
     }
 
-    /** The apply strategies for this call. */
     private fun downloadUpdateOptions(options: ReadableMap) = DownloadUpdateOptions(
         applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
         mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
     )
 
-    /** Each stage's strategy for this call. */
     private fun syncOptions(options: ReadableMap) = SyncOptions(
         applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
         downloadStrategy = option("downloadStrategy", options, DownloadStrategy::fromWire),
@@ -148,7 +143,6 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
     }
 }
 
-/** A result or an event as the bridge carries it. */
 internal fun JSONObject.toWritableMap() = Arguments.makeNativeMap(toMap())
 
 private fun JSONObject.toMap(): Map<String, Any?> = keys().asSequence().associateWith { toBridgeValue(get(it)) }

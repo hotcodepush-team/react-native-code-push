@@ -2,8 +2,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// The SDK version a device reports is package.json's version, written into each platform's sources by every build and
-// never committed, so no release can leave it behind.
+// Every build writes the package.json version into the platform sources, which are never committed,
+// so the SDK version a device reports can never fall behind a release.
 
 const packageDirectory = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { version } = JSON.parse(

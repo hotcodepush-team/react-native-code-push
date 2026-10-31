@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// The binary size of a prepared demo variant: the release APK and the Release simulator `.app`,
-// each in bytes, printed as JSON.
+// Prints as JSON the size in bytes of a prepared demo variant: the release APK and the Release simulator `.app`.
 import { execFileSync } from 'node:child_process';
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,7 +10,7 @@ if (!target) {
   process.exit(2);
 }
 
-// The build step runs offline: it writes the resource file, creates no binary and asks no account.
+// Offline, the build step writes the resource file, creates no binary and needs no account.
 const env = { ...process.env, HOTCODEPUSH_OFFLINE: '1' };
 const sizes = {};
 execFileSync('./gradlew', ['assembleRelease', '--console=plain', '-q'], {

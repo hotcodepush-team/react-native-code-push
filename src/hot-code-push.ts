@@ -22,7 +22,7 @@ import type { HotCodePushListenerHandle } from './definitions';
 
 type CycleListener = (runningCycleCount: number) => void;
 
-/** A listener past the typed surface: `addListener` pairs each event name with its payload, the bridge carries objects. */
+// The bridge carries plain objects, so listeners lose their typed payload below `addListener`.
 type EventListener = (event: object) => void;
 
 type NativeEventName = Exclude<HotCodePushEventName, 'updateRolledBack'>;
@@ -36,47 +36,60 @@ const cycleListeners = new Set<CycleListener>();
 const subscriptions = new Set<NativeSubscription>();
 const updateRolledBackListeners = new Set<EventListener>();
 
-/** The `updateRolledBack` event the native side kept for this start, taken from it once; undefined until a listener asks. */
+// The native side hands out the kept event only once, so the first listener caches it for the others.
 let keptUpdateRolledBackEvent: Promise<object | null> | undefined;
 let runningCycleCount = 0;
 
 /**
- * The React Native SDK over the option, result and event types of `@hotcodepush/protocol`; every listener is
- * answered with a handle whose `remove()` stops it.
+ * The methods of the HotCodePush React Native SDK.
+ * `addListener` returns a handle whose `remove()` stops the listener.
  */
 export interface HotCodePush {
   /**
-   * One cycle under the strategies, the same the SDK runs on its own at start,
-   * resume and interval, stopping at a `manual` gate for the app: fetch the
-   * index, evaluate it locally, download and verify, apply, report. A second
-   * call while one runs joins the running one.
+   * Runs one update cycle: fetch the index, evaluate it, download and verify, apply, report.
+   * It is the cycle the SDK runs on its own at start, resume and interval, and it stops at any `manual` strategy.
+   * A call while a cycle runs joins that cycle.
    */
   sync(options?: SyncOptions): Promise<SyncResult>;
-  /** `sync()` with `downloadStrategy` pinned to `manual`: fetch and evaluate, download nothing. */
+  /** Runs `sync()` with `downloadStrategy: 'manual'`: it checks for an update but downloads nothing. */
   checkForUpdate(): Promise<CheckForUpdateResult>;
-  /** `sync()` with `downloadStrategy` pinned to `auto`: re-check the index, a conditional GET, download and verify, apply per the apply strategies. */
+  /**
+   * Runs `sync()` with `downloadStrategy: 'auto'`.
+   * It re-checks the index, downloads and verifies the update, and applies it as the apply strategies say.
+   */
   downloadUpdate(
     options?: DownloadUpdateOptions,
   ): Promise<DownloadUpdateResult>;
   /** Applies the downloaded update now, whatever the strategy says, and reloads the app. */
   applyUpdate(): Promise<ApplyUpdateResult>;
-  /** Ends the readiness gate when `readySignal` is `manual`; safe to call at any time on any setting. */
+  /** Ends the readiness gate when `readySignal` is `manual`. Safe to call at any time with any setting. */
   notifyReady(): Promise<NotifyReadyResult>;
-  /** Rolls the running release back now, marks its bundle as failed on this device, reports `app_requested`, reloads. */
+  /**
+   * Rolls back the running release now and reloads the app.
+   * The bundle is marked as failed on this device, and the rollback is reported as `app_requested`.
+   */
   rollbackUpdate(options?: RollbackUpdateOptions): Promise<void>;
-  /** Clears every downloaded update and the list of failed bundles, keeps the channel and the attributes, reloads. */
+  /**
+   * Clears all downloaded updates and the list of failed bundles, then reloads the app.
+   * The channel and the attributes stay.
+   */
   clearUpdates(): Promise<void>;
-  /** Restart gating: `isAllowed: false` holds the one restart the SDK would perform on its own — after an `immediate` apply, a `next_resume` apply or a mandatory release alike — until `isAllowed: true` runs it. A restart the app asks for itself, `applyUpdate()`, `rollbackUpdate()` or `clearUpdates()`, is never held. Not persisted: every start begins allowed. */
+  /**
+   * Holds or allows the restart the SDK performs on its own.
+   * With `isAllowed: false`, the restart after an `immediate` apply, a `next_resume` apply or a mandatory release waits until `isAllowed: true` runs it.
+   * Restarts the app asks for (`applyUpdate()`, `rollbackUpdate()`, `clearUpdates()`) are never held.
+   * Not persisted: every start begins allowed.
+   */
   setRestartAllowed(options: SetRestartAllowedOptions): Promise<void>;
-  /** The SDK's state, a snapshot. */
+  /** Returns a snapshot of the SDK state. */
   getState(): Promise<GetStateResult>;
-  /** The channel in effect with its source. */
+  /** Returns the channel in effect and its source. */
   getChannel(): Promise<GetChannelResult>;
-  /** Switches the device to a channel by name or by id; `null` clears the runtime choice. */
+  /** Switches the device to a channel by name or ID. `null` clears the runtime choice. */
   setChannel(options: SetChannelOptions): Promise<void>;
-  /** The facts of the device report. */
+  /** Returns the device facts that the device report carries. */
   getDevice(): Promise<GetDeviceResult>;
-  /** Merges string attributes the app sets for `attribute` conditions; a `null` value removes a key. */
+  /** Merges string attributes for `attribute` conditions. A `null` value removes the key. */
   setAttributes(options: SetAttributesOptions): Promise<void>;
   /** Opens the SDK's native debug screen. */
   showDebugScreen(): Promise<void>;
@@ -88,8 +101,8 @@ export interface HotCodePush {
 }
 
 /**
- * The SDK over the native module. Without it, on the web and in Expo Go, every method rejects with the one error that
- * names the build OTA updates need.
+ * The HotCodePush React Native SDK.
+ * On the web and in Expo Go, which have no native module, every method rejects with one error.
  */
 export const HotCodePush: HotCodePush = {
   addListener: async (eventName, listener) =>
@@ -141,10 +154,7 @@ export const HotCodePush: HotCodePush = {
     ),
 };
 
-/**
- * Tells the listener how many cycles the app started through `HotCodePush` are running, now and on every change;
- * the SDK fires no event for a cycle's start or end, so `useUpdates()` reads its own calls here.
- */
+// The SDK fires no event when a cycle starts or ends, so `useUpdates()` counts the cycles the app starts here.
 export function subscribeToRunningCycles(listener: CycleListener): () => void {
   cycleListeners.add(listener);
   listener(runningCycleCount);
@@ -167,10 +177,8 @@ function addNativeListener(
   };
 }
 
-/**
- * `updateRolledBack` belongs to the start that follows the rollback, before any listener exists: the native side
- * keeps the event, the first listener takes it from there, and every listener of this start receives it.
- */
+// The event belongs to the start after the rollback, when no listener exists yet.
+// The native side keeps it until the first listener asks, and every listener of this start receives it.
 function addUpdateRolledBackListener(
   listener: EventListener,
 ): HotCodePushListenerHandle {
@@ -190,7 +198,6 @@ function addUpdateRolledBackListener(
   };
 }
 
-/** The native module, which a development or release build carries; the web and Expo Go have none. */
 function requireNativeModule(): Spec {
   if (NativeHotCodePush === null) {
     throw new Error(NATIVE_MODULE_MISSING_MESSAGE);

@@ -16,10 +16,6 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.File
 
-/**
- * The bundle to serve at the next start, persisted in the core's own store under one key beside the core's state.
- * A loader over a new store stands for the next process; a recorded editor shows the write commits before the persist returns.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class ReactNativeBundleLoaderTest {

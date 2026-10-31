@@ -6,7 +6,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.module.model.ReactModuleInfoProvider
 
-/** The package autolinking registers: the Turbo Module `HotCodePush`. */
+/** Registers the `HotCodePush` Turbo Module. Autolinking adds it to the app. */
 class HotCodePushPackage : BaseReactPackage() {
     override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? =
         if (name == HotCodePushModule.NAME) HotCodePushModule(reactContext) else null

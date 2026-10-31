@@ -41,14 +41,14 @@ export interface HotCodePushListenerHandle {
 }
 
 /**
- * What `useUpdates()` returns, kept current from the five events and `getState()`.
+ * What `useUpdates()` returns. It stays current through the five events and `getState()`.
  */
 export interface UseUpdatesResult {
-  /** The download's progress from `0` to `1` while a pack downloads, `null` otherwise. */
+  /** Download progress from `0` to `1` while a pack downloads, otherwise `null`. */
   downloadProgress: number | null;
-  /** A cycle the app started through `HotCodePush` is running, or a pack is downloading. */
+  /** Whether a cycle the app started through `HotCodePush` is running or a pack is downloading. */
   isSyncing: boolean;
-  /** The result of the last cycle, the SDK's own included; `null` before the first. */
+  /** The result of the last cycle, including the cycles the SDK runs on its own. `null` before the first. */
   lastSync: SyncResult | null;
   state: GetStateResult;
 }

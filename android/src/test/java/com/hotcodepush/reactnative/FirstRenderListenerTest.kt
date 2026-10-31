@@ -22,10 +22,6 @@ import org.robolectric.annotation.Config
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * The first render of a JavaScript instance, read from a window whose React root the test mounts views into, one dispatched
- * frame at a time. The loader is the SDK's own and records the reloads it asks for, which the test then runs as React Native does.
- */
 @OptIn(UnstableReactNativeAPI::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -98,7 +94,7 @@ class FirstRenderListenerTest {
 
     private fun createListener() = FirstRenderListener(loader, { decorView }) { renders++ }
 
-    /** The replaced instance's views leave the root, then the host asks for the bundle of the new instance. */
+    // React Native clears the views of the replaced instance first, then the host asks for the new bundle.
     private fun reloadAsReactNativeDoes(bundleId: String) {
         reactRoot.removeAllViews()
         loader.beginBundleRequest()
@@ -106,7 +102,7 @@ class FirstRenderListenerTest {
     }
 }
 
-/** A React root as React Native's root view is one: a view group that is its own root view group. */
+// Like the React Native root view, this view group is its own root view group.
 private class TestReactRoot(context: Context) : FrameLayout(context), ReactRoot {
     override fun getAppProperties(): Bundle? = null
 
