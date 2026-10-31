@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const APP_NAME = 'Demo.app';
 
-// The plist Xcode's Info.plist processing leaves in the app, converted to the binary format it writes; the values are invented.
+// The processed Info.plist that Xcode leaves in the app, which beforeEach converts to the binary format. The values are made up.
 const PROCESSED_INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -26,13 +26,13 @@ const PROCESSED_INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `;
 
-// npx as the script finds it beside Node: it records the arguments, one per line, instead of running the CLI.
+// Stands in for the npx beside Node and records the arguments, one per line, instead of running the CLI.
 const RECORDING_NPX =
   '#!/bin/sh\nprintf "%s\\n" "$@" > "$(dirname "$0")/arguments"\n';
 
 const SCRIPT_PATH = join(import.meta.dirname, 'binary-create-xcode.sh');
 
-// The script runs inside Xcode, which runs on macOS alone, as does PlistBuddy.
+// Xcode and PlistBuddy run only on macOS.
 describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
   let appPath: string;
   let buildDirectoryPath: string;
@@ -132,10 +132,7 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
     return value;
   }
 
-  /**
-   * Runs the script with the build settings Xcode gives a phase of the app target in a build, not an archive, the
-   * template's version settings among them, and returns the arguments it ran the CLI with.
-   */
+  // Uses the build settings Xcode gives an app target phase in a plain build, including the template version settings.
   function runScript(buildSettings: Record<string, string>): string[] {
     execFileSync('/bin/sh', [SCRIPT_PATH], {
       env: {

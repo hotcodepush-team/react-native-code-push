@@ -20,10 +20,9 @@ import com.facebook.react.runtime.cxxreactpackage.CxxReactPackage
 import com.facebook.react.runtime.hermes.HermesInstance
 
 /**
- * The React host of an app on HotCodePush: `DefaultReactHost.getDefaultReactHost` with one difference, the bundle.
- * React Native's own host fixes its bundle when it is created; this one asks the SDK at every start and reload,
- * so applying a release reloads the JavaScript without restarting the process. `MainApplication` imports this
- * `getDefaultReactHost` in place of React Native's; the parameters are the same.
+ * A drop-in replacement for `DefaultReactHost.getDefaultReactHost` that asks the SDK for the bundle at every start and reload.
+ * Import it in `MainApplication` in place of the React Native one. The parameters are the same.
+ * Applying a release then reloads the JavaScript without restarting the process.
  */
 object HotCodePushReactHost {
     private var reactHost: ReactHost? = null
@@ -75,7 +74,6 @@ object HotCodePushReactHost {
     }
 }
 
-/** React Native's delegate with the bundle resolved anew each time the host creates its JavaScript instance. */
 @OptIn(UnstableReactNativeAPI::class)
 private class ServedBundleReactHostDelegate(
     delegate: ReactHostDelegate,

@@ -1,6 +1,5 @@
-// The library built on its own, for its unit tests. React Native comes from the package's devDependency as an app's build
-// finds it: the Gradle plugin from its included build, react-android at the version React Native's plugin forces. An app's
-// root build script puts the plugin on the classpath; here the root is the library, whose build script stays as it ships.
+// Builds the library on its own for its unit tests, with React Native from the devDependency as an app build finds it.
+// In an app, the root build script puts the React Native plugin on the classpath. Here the library is the root, so this file adds it.
 includeBuild('../node_modules/@react-native/gradle-plugin')
 rootProject.name = 'react-native-code-push'
 

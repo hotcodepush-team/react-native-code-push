@@ -11,18 +11,15 @@ import com.hotcodepush.core.PlainException
 import java.io.File
 import java.io.InputStream
 
-/**
- * React Native loads the JavaScript its host is handed: a bundle is laid out by path under the store's `served`
- * directory, the host asks for the served one through [HotCodePushReactHost], and a switch is a reload of the host.
- */
+// React Native loads the JavaScript its host is handed, so a switch is a reload of the host.
+// Bundles live under the `served` directory of the store, and a `null` bundle ID means the embedded bundle.
 class ReactNativeBundleLoader(
     context: Context,
-    /** The core's own store, so the bundle to serve at the next start lies beside the state it belongs to. */
+    // The core's own store, so the bundle for the next start lies beside the state it belongs to.
     private val store: KeyValueStore,
     storeDirectory: File,
     private val reloadReactNative: () -> Unit,
 ) : BundleLoader {
-    /** The bundle a reload the SDK asked for runs, `null` for the embedded one. */
     class RequestedReload(val bundleId: String?)
 
     private val networkMonitor = NetworkMonitor(context)
@@ -31,27 +28,25 @@ class ReactNativeBundleLoader(
     private var isHostRunning = false
     private var requestedReload: RequestedReload? = null
 
-    /** The bundle the host runs, `null` the embedded one: the one it was served last, which a bundle request leaves as it is. */
+    // The bundle served last. A bundle request does not change it.
     @get:Synchronized
     var runningBundleId: String? = null
         private set
 
-    /**
-     * The host asks for its bundle, at the start and at every reload: until it is served one, the core's choice is persisted and
-     * never reloaded into. Answers the reload the SDK asked for, `null` at the start and for a reload the SDK did not ask for.
-     */
+    // Called at the start and at every reload. Until the host is served, the core's choice is persisted but never reloaded into.
+    // Returns `null` at the start and for a reload the SDK did not ask for.
     @Synchronized
     fun beginBundleRequest(): RequestedReload? {
         isHostRunning = false
         return requestedReload.also { requestedReload = null }
     }
 
-    /** A reload the SDK asked for has not reached the host yet: whatever renders until it does is the instance the reload replaces. */
+    // Until the requested reload reaches the host, whatever renders is the instance the reload replaces.
     @get:Synchronized
     val isReloadPending: Boolean
         get() = requestedReload != null
 
-    /** The host runs the bundle from now on, `null` the embedded one: answers its file, none while the bundle's JavaScript is not on disk. */
+    // Returns `null` while the JavaScript of the bundle is not on disk.
     @Synchronized
     fun serveBundle(bundleId: String?): File? {
         val file = bundleId?.let(::bundleFile)?.takeIf { it.isFile }
@@ -70,7 +65,7 @@ class ReactNativeBundleLoader(
         store.putString(SERVED_BUNDLE_ID_KEY, bundleId)
     }
 
-    /** A host that is not running yet is served the core's answer when it asks; a running one reloads into the bundle. */
+    // A host that is not running yet gets the bundle when it asks. A running host reloads into it.
     override fun loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId)
         val isReloadNeeded = synchronized(this) {
@@ -87,7 +82,7 @@ class ReactNativeBundleLoader(
 
     private fun bundleFile(bundleId: String) = File(projectionDirectory(bundleId), BUNDLE_FILE_NAME)
 
-    /** The persisted bundle counts only while its JavaScript is on disk; anything else is the embedded bundle. */
+    // The persisted bundle counts only while its JavaScript is on disk. Otherwise the embedded bundle runs.
     private fun persistedBundleId(): String? = store.getString(SERVED_BUNDLE_ID_KEY)?.takeIf { bundleFile(it).isFile }
 
     companion object {
@@ -97,11 +92,8 @@ class ReactNativeBundleLoader(
     }
 }
 
-/**
- * The files compiled into the APK, addressed by the embedded manifest's hashes: the JavaScript among the assets,
- * the images among the resources. The build may recompress an image, so a resource counts only when its bytes still hash to the manifest's value.
- * None in a build that bundled no JavaScript, whose resource file carries no manifest.
- */
+// The JavaScript lives among the assets and the images among the resources.
+// The build may recompress an image, so a resource counts only while its bytes still match the manifest hash.
 class ApkEmbeddedBundle(private val context: Context, manifest: EmbeddedBundleManifest?) : EmbeddedBundle {
     private val pathsBySha256 = manifest?.files.orEmpty().associate { it.sha256 to it.path }
 
@@ -126,7 +118,7 @@ class ApkEmbeddedBundle(private val context: Context, manifest: EmbeddedBundleMa
     }
 }
 
-/** A bundle path React Native's bundler writes as an Android resource, `drawable-mdpi/logo.png` or `raw/sound.mp3`. */
+// A bundle path that the React Native bundler writes as an Android resource, such as `drawable-mdpi/logo.png` or `raw/sound.mp3`.
 private class ResourcePath(val type: String, val name: String) {
     companion object {
         private val RESOURCE_TYPES = setOf("drawable", "raw")

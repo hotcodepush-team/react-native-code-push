@@ -1,15 +1,13 @@
 #!/bin/sh
-# The build step of the Xcode build, run by the "Create HotCodePush binary" phase `hotcodepush init` adds after
-# "Bundle React Native code and images": the CLI writes hotcodepush.json into the app and, in a store build, creates
-# the binary. The phase holds one line; what it runs lives here.
+# Run by the "Create HotCodePush binary" phase that `hotcodepush init` adds after "Bundle React Native code and images".
+# The CLI writes hotcodepush.json into the app and, in a store build, creates the binary.
 set -e
 
 DEST="$CONFIGURATION_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
 PROJECT_ROOT="${PROJECT_ROOT:-$PROJECT_DIR/..}"
 
-# A Debug configuration runs the development server's JavaScript, and what React Native embeds for a device there is a
-# development bundle: the CLI is given an empty directory instead, so it writes the resource file without an embedded
-# bundle and asks the API nothing, on a device and a simulator alike. `*Debug*` is React Native's match for DEV.
+# A Debug configuration runs Metro's JavaScript, and on a device React Native embeds only a development bundle.
+# So the CLI gets an empty directory and writes the resource file without an embedded bundle or an API call. `*Debug*` matches DEV as React Native does.
 case "$CONFIGURATION" in
   *Debug*)
     EMBEDDED_ASSETS_PATH="$DERIVED_FILE_DIR/hotcodepush-no-bundle"
@@ -20,10 +18,8 @@ case "$CONFIGURATION" in
     ;;
 esac
 
-# The store build is an archive, which Xcode marks with DEPLOYMENT_POSTPROCESSING, the setting behind "Run script only
-# when installing": it creates the binary under the version and build the device reports, from the built app's processed
-# Info.plist, since Expo's prebuild writes them into the plist as literals and leaves MARKETING_VERSION and
-# CURRENT_PROJECT_VERSION at the template's. A Run or a plain build writes the resource file alone.
+# Xcode marks an archive, the store build, with DEPLOYMENT_POSTPROCESSING ("Run script only when installing").
+# Version and build come from the processed Info.plist, since Expo's prebuild writes them there as literals and leaves MARKETING_VERSION and CURRENT_PROJECT_VERSION at the template values.
 if [ "$DEPLOYMENT_POSTPROCESSING" = "YES" ]; then
   INFO_PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
   BINARY_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST")
@@ -33,7 +29,7 @@ else
   set -- resource-file write
 fi
 
-# Xcode's PATH has no Node; React Native's .xcode.env names the binary, and npx sits beside it.
+# Xcode's PATH has no Node. React Native's .xcode.env names the Node binary, and npx sits beside it.
 PATH="$(dirname "$NODE_BINARY"):$PATH"
 export PATH
 

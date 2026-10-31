@@ -1,14 +1,11 @@
-// The build step of the Android build. The app's build.gradle applies this file with the one line `hotcodepush init`
-// adds; for every variant, the task below runs the CLI after React Native's bundling: a store build, a build type other
-// than debug, runs `binary create`, which writes hotcodepush.json into the variant's assets and creates the binary; any
-// other build runs `resource-file write`, which writes the file alone. A variant React Native bundles nothing for gets
-// the file without an embedded bundle, and no binary.
+// Applied through the line `hotcodepush init` adds to the app's build.gradle.
+// After React Native bundles a variant, a store build (any build type but debug) runs `binary create` and any other build runs `resource-file write`.
 
 import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.tasks.Optional
 
-// core-android's maven branch publishes the commit the SDK pins, until the library is on Maven Central.
+// The app resolves the core from core-android's maven branch until the library is on Maven Central.
 repositories {
     maven { url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/' }
 }
@@ -48,7 +45,7 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
 
     @TaskAction
     void createBinary() {
-        // The embedded bundle as one tree, laid out as an uploaded bundle is: the JavaScript beside its drawable directories.
+        // Stages the embedded bundle as an uploaded bundle is laid out: the JavaScript beside its drawable directories.
         // Without a bundle the tree stays empty, which binary create reads as a build without an embedded bundle.
         fileSystemOperations.sync {
             if (jsBundleDir.present) it.from(jsBundleDir)
@@ -74,7 +71,7 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
 androidComponents.onVariants(androidComponents.selector().all()) { variant ->
     def variantName = variant.name.capitalize()
     def bundleTaskName = "createBundle${variantName}JsAndAssets"
-    // A debuggable variant is served by Metro: React Native bundles nothing for it.
+    // Metro serves a debuggable variant, so React Native bundles nothing for it.
     def bundleTask = tasks.names.contains(bundleTaskName) ? tasks.named(bundleTaskName) : null
     def reactExtension = project.extensions.findByName('react')
     def binaryCreateTask = tasks.register("createHotCodePushBinary${variantName}", HotCodePushBinaryCreateTask) {
@@ -89,7 +86,8 @@ androidComponents.onVariants(androidComponents.selector().all()) { variant ->
         it.projectRoot.set(reactExtension == null ? rootProject.layout.projectDirectory.dir('..') : reactExtension.root)
         it.stagingDirectory.set(layout.buildDirectory.dir("intermediates/hotcodepush/${variant.name}"))
         it.storeBuild.set(variant.buildType != 'debug')
-        // The resource file carries the build's time as the floor and a store build creates its binary on every run: the step never counts as up to date.
+        // The resource file carries the build time as its floor, and a store build creates its binary on every run.
+        // So the task never counts as up to date.
         it.outputs.upToDateWhen { false }
     }
     variant.sources.assets.addGeneratedSourceDirectory(binaryCreateTask) { it.outputDirectory }

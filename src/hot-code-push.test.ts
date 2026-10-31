@@ -31,7 +31,7 @@ describe('HotCodePush', () => {
   let NativeHotCodePush: Spec;
   let subscribeToRunningCycles: typeof Sdk.subscribeToRunningCycles;
 
-  // A test is a start of the app: the module is loaded anew, as a JavaScript instance loads it.
+  // Each test is a new app start, so the module loads fresh, as a new JavaScript instance loads it.
   beforeEach(async () => {
     vi.resetModules();
     NativeHotCodePush = (await import('./NativeHotCodePush')).default as Spec;

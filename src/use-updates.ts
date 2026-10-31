@@ -15,8 +15,9 @@ const EMBEDDED_STATE: GetStateResult = {
 };
 
 /**
- * The SDK's state for a component: `getState()` read on mount and again after each of the five events and each
- * cycle the app runs, with the download's progress in between. Until the first read it is the embedded state.
+ * Returns the SDK state for a component and keeps it current.
+ * It reads `getState()` on mount, after each event and after each cycle the app runs, and tracks download progress in between.
+ * Until the first read, it returns the embedded state.
  */
 export function useUpdates(): UseUpdatesResult {
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
@@ -32,14 +33,14 @@ export function useUpdates(): UseUpdatesResult {
             setState(readState);
           }
         },
-        // An unconfigured build has no state to read; the embedded state stands.
+        // An unconfigured build has no state to read, so the embedded state stays.
         () => undefined,
       );
     const endDownload = () => {
       setDownloadProgress(null);
       refreshState();
     };
-    // The web and Expo Go have no native module to listen to; the embedded state stands.
+    // The web and Expo Go have no native module to listen to, so the embedded state stays.
     const handles = [
       HotCodePush.addListener('downloadProgress', event =>
         setDownloadProgress(event.progress),

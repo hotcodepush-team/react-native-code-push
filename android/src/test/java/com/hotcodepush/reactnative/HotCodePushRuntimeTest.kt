@@ -17,10 +17,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
 
-/**
- * The bundle React Native loads, as its host asks the runtime at the start and at every reload, over a core whose start answers
- * the bundle its store names. A downloaded bundle is laid out and persisted through the SDK's own loader, where the core puts it.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class HotCodePushRuntimeTest {
@@ -58,20 +54,17 @@ class HotCodePushRuntimeTest {
         }
     }
 
-    /** The core the runtime creates, whose start answers the bundle its store names; the start is in the foreground, as Robolectric's process is. */
+    // The Robolectric process is in the foreground, so the start is not headless.
     private fun mockCoreWhoseStartAnswers(bundleId: String?): MockedConstruction<Core> =
         mockConstruction(Core::class.java) { core, _ -> `when`(core.handleAppStartBlocking(false)).thenReturn(bundleId) }
 
-    /** React Native asks its host for the bundle and loads what the answer points at: the path it loads. */
     private fun askForBundle(): String = runtime.resolveBundleLoader(embeddedBundleLoader).loadScript(mock(JSBundleLoaderDelegate::class.java))
 
-    /** A downloaded bundle's JavaScript where the core's download lays it out: answers the file's path. */
     private fun layOutBundle(bundleId: String): String {
         val bundleDirectory = bundleLoader.projectionDirectory(bundleId).also { it.mkdirs() }
         return File(bundleDirectory, ReactNativeBundleLoader.BUNDLE_FILE_NAME).also { it.writeText("") }.path
     }
 
-    /** A release downloaded for the next start, laid out and persisted as the core does through the loader. */
     private fun downloadForNextStart(bundleId: String) {
         layOutBundle(bundleId)
         bundleLoader.persistServedBundle(bundleId)

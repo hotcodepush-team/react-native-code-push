@@ -14,7 +14,7 @@ buildscript {
 
 apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
-// Codegen: the Turbo Module's spec generated from src/NativeHotCodePush.ts.
+// Runs Codegen, which generates the Turbo Module spec from src/NativeHotCodePush.ts.
 apply plugin: 'com.facebook.react'
 
 android {

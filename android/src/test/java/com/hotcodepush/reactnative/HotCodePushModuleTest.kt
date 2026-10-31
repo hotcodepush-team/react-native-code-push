@@ -17,7 +17,6 @@ import org.robolectric.annotation.Config
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-/** A call's options as the module reads them, over the runtime's core, which records its calls. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class HotCodePushModuleTest {
@@ -40,14 +39,14 @@ class HotCodePushModuleTest {
         }
     }
 
-    /** The context React Native hands the module, whose application context the runtime keeps. */
+    // The runtime reads the resource file through the application context.
     private fun reactContext(): ReactApplicationContext {
         val context = contextWithResourceFile()
         return mock(ReactApplicationContext::class.java).also { `when`(it.applicationContext).thenReturn(context) }
     }
 
     companion object {
-        /** How long a test waits for a call's coroutine, which runs on the IO dispatcher. */
+        // Calls run in a coroutine on the IO dispatcher.
         private const val CALL_TIMEOUT_SECONDS = 5L
     }
 }

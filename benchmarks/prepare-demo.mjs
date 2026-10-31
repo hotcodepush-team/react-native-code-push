@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// Copies the demo app into a scratch directory as one of the two variants the baseline compares:
-// `with` installs the package tarball, whose pod carries its own core; `without` removes the package and every line
-// `init` wired and swaps the screen for the same screen with nothing behind it. Both log the first paint.
+// Copies the demo app into a scratch directory as one of the two baseline variants. Both log the first paint.
+// `with` installs the package tarball. `without` removes the package and every line `init` wired, and keeps the same screen with nothing behind it.
 import { execFileSync } from 'node:child_process';
 import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -20,7 +19,7 @@ if (
 }
 
 const PACKAGE_NAME = '@hotcodepush/react-native-code-push';
-// The core's own pod, which the demo's Podfile may still pin from before the package's pod carried the core.
+// The demo Podfile may still pin the core pod from before the package pod carried the core.
 const CORE_POD_LINE = /^ *pod 'HotCodePushCore'.*\n/m;
 const excluded = new Set([
   '.git',
@@ -36,7 +35,7 @@ cpSync(source, target, {
   filter: path => !excluded.has(path.split('/').pop()),
 });
 
-// At the error level: an iOS release build drops what the console logs below it.
+// Logged as an error, since an iOS release build drops console output below that level.
 const firstPaintMarker =
   "requestAnimationFrame(() => console.error('[baseline] first paint'));";
 if (variant === 'with') {
@@ -163,7 +162,8 @@ function removeLines(text, needle) {
     .join('\n');
 }
 
-// The phase `init` added, out of the project again: found by the package's script it runs, removed with the line of the target that names it.
+// Matches the phase object `init` added by the package script it runs.
+// Removing every line with its ID also takes the phase out of the target.
 function removeBinaryCreatePhase(project) {
   const phase = project.match(
     /\t\t([0-9A-F]{24}) \/\* [^*]+ \*\/ = \{[^}]*react-native-code-push\/scripts\/[^}]*\};\n/,
