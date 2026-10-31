@@ -15,7 +15,6 @@ final class ReactNativeBundleLoader: BundleLoader {
     private static let servedBundleIdKey = "hotcodepush.servedBundleId"
 
     private let lock = NSLock()
-    private let networkMonitor = NetworkMonitor()
     private let servedDirectory: URL
     private let store: KeyValueStore
 
@@ -99,10 +98,6 @@ final class ReactNativeBundleLoader: BundleLoader {
         lock.lock()
         defer { lock.unlock() }
         return isHostRunning ? _runningBundleId : persistedBundleId()
-    }
-
-    func isConnectionMetered() -> Bool {
-        return networkMonitor.isConnectionMetered()
     }
 
     private func bundleFileURL(bundleId: String) -> URL {

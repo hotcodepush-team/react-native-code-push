@@ -31,7 +31,7 @@ class FirstRenderListenerTest {
     private val reactRoot = TestReactRoot(context)
     private val uiManager: UIManager = mock(UIManager::class.java)
     private var requestedReloads = 0
-    private val loader = ReactNativeBundleLoader(context, SharedPreferencesStore(context), File(context.filesDir, "hotcodepush")) { requestedReloads++ }
+    private val loader = ReactNativeBundleLoader(SharedPreferencesStore(context), File(context.filesDir, "hotcodepush")) { requestedReloads++ }
     private var renders = 0
 
     @Test
