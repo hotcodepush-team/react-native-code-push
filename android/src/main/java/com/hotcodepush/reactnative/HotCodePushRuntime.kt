@@ -40,7 +40,7 @@ interface HotCodePushEventSink {
 class HotCodePushRuntime internal constructor(private val context: Context) : CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val loader = ReactNativeBundleLoader(context, SharedPreferencesStore(context), FileStore.defaultRootDirectory(context), ::reloadReactNative)
+    private val loader = ReactNativeBundleLoader(SharedPreferencesStore(context), FileStore.defaultRootDirectory(context), ::reloadReactNative)
 
     @Volatile private var core: Core? = null
 

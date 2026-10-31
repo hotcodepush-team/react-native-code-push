@@ -43,9 +43,9 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
 
     override fun downloadUpdate(options: ReadableMap, promise: Promise) = runtime.invoke(promise) { it.downloadUpdate(downloadUpdateOptions(options)).toJson() }
 
-    override fun getChannel(promise: Promise) = runtime.invoke(promise) { it.channel().toJson() }
+    override fun getChannel(promise: Promise) = runtime.invoke(promise) { it.getChannel().toJson() }
 
-    override fun getDevice(promise: Promise) = runtime.invoke(promise) { it.deviceResult().toJson() }
+    override fun getDevice(promise: Promise) = runtime.invoke(promise) { it.getDevice().toJson() }
 
     override fun getState(promise: Promise) = runtime.invoke(promise) { it.getState().toJson() }
 

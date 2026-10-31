@@ -152,9 +152,9 @@ private let isDebugBuild = false
         case .downloadUpdate:
             return try Json.encodeObject(await core.downloadUpdate(options: try HotCodePushRuntime.downloadUpdateOptions(from: options)))
         case .getChannel:
-            return try Json.encodeObject(await core.channel())
+            return try Json.encodeObject(await core.getChannel())
         case .getDevice:
-            return try Json.encodeObject(await core.deviceResult())
+            return try Json.encodeObject(await core.getDevice())
         case .getState:
             return try Json.encodeObject(await core.getState())
         case .notifyReady:

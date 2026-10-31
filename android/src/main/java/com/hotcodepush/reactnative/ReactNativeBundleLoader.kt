@@ -6,7 +6,6 @@ import com.hotcodepush.core.EmbeddedBundle
 import com.hotcodepush.core.EmbeddedBundleManifest
 import com.hotcodepush.core.Hashing
 import com.hotcodepush.core.KeyValueStore
-import com.hotcodepush.core.NetworkMonitor
 import com.hotcodepush.core.PlainException
 import java.io.File
 import java.io.InputStream
@@ -14,7 +13,6 @@ import java.io.InputStream
 // React Native loads the JavaScript its host is handed, so a switch is a reload of the host.
 // Bundles live under the `served` directory of the store, and a `null` bundle ID means the embedded bundle.
 class ReactNativeBundleLoader(
-    context: Context,
     // The core's own store, so the bundle for the next start lies beside the state it belongs to.
     private val store: KeyValueStore,
     storeDirectory: File,
@@ -22,7 +20,6 @@ class ReactNativeBundleLoader(
 ) : BundleLoader {
     class RequestedReload(val bundleId: String?)
 
-    private val networkMonitor = NetworkMonitor(context)
     private val servedDirectory = File(storeDirectory, "served")
 
     private var isHostRunning = false
@@ -77,8 +74,6 @@ class ReactNativeBundleLoader(
 
     @Synchronized
     override fun servedBundleId(): String? = if (isHostRunning) runningBundleId else persistedBundleId()
-
-    override fun isConnectionMetered(): Boolean = networkMonitor.isConnectionMetered()
 
     private fun bundleFile(bundleId: String) = File(projectionDirectory(bundleId), BUNDLE_FILE_NAME)
 

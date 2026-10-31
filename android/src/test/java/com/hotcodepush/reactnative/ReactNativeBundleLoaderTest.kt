@@ -42,5 +42,5 @@ class ReactNativeBundleLoaderTest {
         assertEquals("b1", createLoader(SharedPreferencesStore(context)).servedBundleId())
     }
 
-    private fun createLoader(store: KeyValueStore) = ReactNativeBundleLoader(context, store, File(context.filesDir, "hotcodepush")) {}
+    private fun createLoader(store: KeyValueStore) = ReactNativeBundleLoader(store, File(context.filesDir, "hotcodepush")) {}
 }
