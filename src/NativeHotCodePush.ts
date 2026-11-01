@@ -7,7 +7,7 @@ export interface Spec extends TurboModule {
   applyUpdate(): Promise<CodegenTypes.UnsafeObject>;
   checkForUpdate(): Promise<CodegenTypes.UnsafeObject>;
   clearUpdates(): Promise<void>;
-  // Returns the kept `updateRolledBack` event once.
+  // Returns the retained `updateRolledBack` event once.
   consumeUpdateRolledBack(): Promise<CodegenTypes.UnsafeObject>;
   downloadUpdate(
     options: CodegenTypes.UnsafeObject,

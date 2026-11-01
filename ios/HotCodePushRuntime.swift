@@ -2,7 +2,7 @@ import Foundation
 import HotCodePushCore
 import React
 
-// The core ships prebuilt in Release, so the app's debug flag is read here, where the SDK compiles with the app.
+// The core ships as a prebuilt Release build. The SDK compiles with the app, so it reads the debug flag here.
 #if DEBUG
 private let isDebugBuild = true
 #else
@@ -22,7 +22,7 @@ private let isDebugBuild = false
     private static let notServedMessage = "React Native did not ask HotCodePush for its bundle, so over-the-air (OTA) updates are off in this run: Metro serves a debug build, and any other build needs `HotCodePush.bundleURL()` in the file that overrides `bundleURL()`, which `npx hotcodepush doctor` checks."
 
     private enum Method: String {
-        case applyUpdate, checkForUpdate, clearUpdates, consumeUpdateRolledBack, downloadUpdate, getChannel, getDevice, getState
+        case applyUpdate, checkForUpdate, clearUpdates, downloadUpdate, getChannel, getDevice, getState
         case notifyReady, rollbackUpdate, setAttributes, setChannel, setRestartAllowed, showDebugScreen, sync
     }
 
@@ -71,10 +71,6 @@ private let isDebugBuild = false
     @objc public func invoke(_ methodName: String, options: [String: Any], resolve: @escaping (Any?) -> Void, reject: @escaping (String) -> Void) {
         guard let method = Method(rawValue: methodName) else {
             reject("HotCodePush has no method named \(methodName)")
-            return
-        }
-        if method == .consumeUpdateRolledBack {
-            resolve(consumeUpdateRolledBack())
             return
         }
         guard let core = core else {
@@ -147,8 +143,6 @@ private let isDebugBuild = false
             return try Json.encodeObject(await core.checkForUpdate())
         case .clearUpdates:
             await core.clearUpdates()
-        case .consumeUpdateRolledBack:
-            return consumeUpdateRolledBack()
         case .downloadUpdate:
             return try Json.encodeObject(await core.downloadUpdate(options: try HotCodePushRuntime.downloadUpdateOptions(from: options)))
         case .getChannel:
@@ -231,7 +225,7 @@ private let isDebugBuild = false
         eventSink?.emitEvent(eventName, payload: payload)
     }
 
-    // Kept until the JavaScript of the next start listens, since the instance that saw the rollback is gone by then.
+    // Retained until the JavaScript of the next start listens, since the instance that saw the rollback is gone by then.
     fileprivate func retainUpdateRolledBack(_ event: UpdateRolledBackEvent) {
         let payload = try? Json.encodeObject(event)
         lock.lock()
@@ -240,7 +234,7 @@ private let isDebugBuild = false
     }
 
     // Handed out once. The event is null when no rollback preceded this start.
-    private func consumeUpdateRolledBack() -> [String: Any] {
+    @objc public func consumeUpdateRolledBack() -> [String: Any] {
         lock.lock()
         defer { lock.unlock() }
         let event: Any = retainedUpdateRolledBackEvent ?? NSNull()

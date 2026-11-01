@@ -167,7 +167,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         eventSink?.emitEvent("downloadProgress", event.toJson())
     }
 
-    // Kept until the JavaScript of the next start listens, since the instance that saw the rollback is gone by then.
+    // Retained until the JavaScript of the next start listens, since the instance that saw the rollback is gone by then.
     @Synchronized
     override fun updateRolledBack(event: UpdateRolledBackEvent) {
         retainedUpdateRolledBackEvent = event.toJson()

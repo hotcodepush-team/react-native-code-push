@@ -20,6 +20,9 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
     @Input
     abstract Property<String> getBinaryVersion()
 
+    @Input
+    abstract Property<Boolean> getIsStoreBuild()
+
     @InputDirectory
     @Optional
     abstract DirectoryProperty getJsBundleDir()
@@ -36,9 +39,6 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
 
     @Internal
     abstract DirectoryProperty getStagingDirectory()
-
-    @Input
-    abstract Property<Boolean> getStoreBuild()
 
     @Inject
     abstract ExecOperations getExecOperations()
@@ -57,7 +57,7 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
         }
         stagingDirectory.get().asFile.mkdirs()
         def npx = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c', 'npx'] : ['npx']
-        def command = storeBuild.get()
+        def command = isStoreBuild.get()
             ? ['binary', 'create', '--binary-version', binaryVersion.get(), '--binary-build', binaryBuild.get()]
             : ['resource-file', 'write']
         execOperations.exec {
@@ -88,7 +88,7 @@ androidComponents.onVariants(androidComponents.selector().all()) { variant ->
         }
         it.projectRoot.set(reactExtension == null ? rootProject.layout.projectDirectory.dir('..') : reactExtension.root)
         it.stagingDirectory.set(layout.buildDirectory.dir("intermediates/hotcodepush/${variant.name}"))
-        it.storeBuild.set(variant.buildType != 'debug')
+        it.isStoreBuild.set(variant.buildType != 'debug')
         // The resource file carries the build time as its floor, and a store build creates its binary on every run.
         // So the task never counts as up to date.
         it.outputs.upToDateWhen { false }
