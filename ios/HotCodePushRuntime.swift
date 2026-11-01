@@ -169,7 +169,7 @@ private let isDebugBuild = false
             guard let isAllowed = options["isAllowed"] as? Bool else { throw PlainError("isAllowed must be a boolean") }
             await core.setRestartAllowed(isAllowed)
         case .showDebugScreen:
-            await HotCodePushRuntime.presentDebugScreen(core: core)
+            try await HotCodePushRuntime.presentDebugScreen(core: core)
         case .sync:
             return try Json.encodeObject(await core.sync(trigger: .manual, options: try HotCodePushRuntime.syncOptions(from: options)))
         }
@@ -221,8 +221,8 @@ private let isDebugBuild = false
     }
 
     @MainActor
-    private static func presentDebugScreen(core: Core) {
-        guard let presenter = RCTPresentedViewController() else { return }
+    private static func presentDebugScreen(core: Core) throws {
+        guard let presenter = RCTPresentedViewController() else { throw PlainError("The debug screen has no view controller to open over") }
         DebugScreenViewController.present(core: core, from: presenter)
     }
 
