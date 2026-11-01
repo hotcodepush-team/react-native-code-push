@@ -1,0 +1,91 @@
+name: Bug report
+description: Report behavior that does not match the documentation
+title: 'bug: '
+labels: ['type/bug', 'state/needs-triage']
+body:
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      description: The version of this SDK you are on. Reproduce on the latest release before reporting.
+      placeholder: 1.4.2
+    validations:
+      required: true
+  - type: input
+    id: framework-version
+    attributes:
+      label: Framework version
+      description: The version of the framework your app is built with.
+    validations:
+      required: true
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Platform(s)
+      description: The platforms the bug occurs on.
+      options:
+        - label: Android
+        - label: iOS
+        - label: Web
+  - type: input
+    id: device-os-version
+    attributes:
+      label: Device / OS version
+      description: The device or simulator and its operating system version.
+      placeholder: Pixel 9, Android 16
+    validations:
+      required: true
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current behavior
+      description: What happens.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The steps that lead to the current behavior.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: reproduction-repository
+    attributes:
+      label: Reproduction repository
+      description: A link to a public fork of this SDK's demo app that reproduces the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant log output. No secrets, no tokens.
+      render: shell
+  - type: textarea
+    id: related-issues
+    attributes:
+      label: Related issues
+      description: Issues and discussions that may be related.
+  - type: checkboxes
+    id: before-submitting
+    attributes:
+      label: Before submitting
+      options:
+        - label: I am on the latest version.
+          required: true
+        - label: I have searched the existing issues and discussions.
+          required: true
+        - label: I understand that issues without a reproduction are closed.
+          required: true

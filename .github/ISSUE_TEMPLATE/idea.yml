@@ -1,0 +1,17 @@
+name: Idea
+description: Something unshaped — a question, a refactoring thought, a maybe-feature
+title: 'idea: '
+labels: ['idea', 'state/needs-triage']
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: In your own words. No structure required.
+    validations:
+      required: true
+  - type: textarea
+    id: why-now
+    attributes:
+      label: Why now
+      description: What triggered the thought.
