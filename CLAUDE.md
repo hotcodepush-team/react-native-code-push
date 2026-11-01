@@ -60,13 +60,15 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The SDK never sees an API DTO: its contract is the channel index, the bundle manifest and the events endpoint, additive only.
 - Safety is on by default and cannot be switched off: the readiness gate, the local blocklist, the automatic rollback. The embedded bundle is the one exception: a release that carries it is confirmed as it becomes current, never gated, rolled back or blocklisted, and downloads nothing.
 - Nothing a device does not need to decide lives here: rollout, conditions, revocation and the cap are evaluated from the index, never configured.
-- Every catalog value is lowercase snake_case with no prefix, the statuses, the reasons and the strategies alike: `up_to_date`, `signature_invalid`, `next_start`; the event names such as `updateAvailable`, the fields, the environment variables, Xcode's build settings and each language's identifiers, Kotlin's `SyncTrigger.MANUAL`, keep their own form. A method throws a plain error only for a programming mistake, and rejects with one error where the native module is missing, on the web and in Expo Go.
+- Every catalog value is lowercase snake_case with no prefix, the statuses, the reasons and the strategies alike: `up_to_date`, `signature_invalid`, `next_start`; the event names, the methods, the fields, the configuration keys, the environment variables and each language's identifiers keep their own form. A method throws a plain error only for a programming mistake.
 - Results are one shape per method and never throw for an outcome an app should handle.
-- The Codegen spec carries plain objects; `hot-code-push.ts` types them one layer up with `@hotcodepush/protocol`'s result and event types, so those stay the one definition.
-- Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update platform for React Native, Expo, Capacitor and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
-- Wherever the supported frameworks are listed, the order is React Native, Expo, Capacitor and Cordova, the larger communities first; this repository's own sentences lead with React Native.
+- Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update service for React Native, Expo, Capacitor and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
+- Prose names the supported frameworks in the order React Native, Expo, Capacitor and Cordova, the larger communities first; a list a reader scans for their own item, such as an enum's choices, a prompt, a tab set or a table, sorts alphabetically.
+- This repository's own sentences lead with React Native.
 - A test earns its place by catching a bug nothing else catches, at the lowest layer that can prove it; one test per branch, never per value, and nothing for what the types, the framework or a library guarantee.
 - A new test names the behaviour or the bug it proves; if deleting the production code would not fail it, it does not get in.
+- A method rejects with one error where the native module is missing, on the web and in Expo Go.
+- The Codegen spec carries plain objects; `hot-code-push.ts` types them one layer up with `@hotcodepush/protocol`'s result and event types, so those stay the one definition.
 
 ## Comments
 
@@ -78,5 +80,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 
 ## Agent workspace
 
-- `.claude/skills/` holds the developer skills copied from `hotcodepush-team/.github`, pinned in `skills-lock.json`.
+- No `.mcp.json`: no server covers this repo's stack yet; the HotCodePush server joins when it exists.
+- `.claude/skills/` holds the developer skills copied from `hotcodepush-team/.github` with the skills CLI and pinned in `skills-lock.json`; update them with `npx skills update`.
+- `.github/copilot-instructions.md` holds the review criteria, the only Copilot-specific file.
 - Commits are conventional commits; `main` is trunk, CI is the gate, and a commit that lands an issue says `Closes #<n>`.
