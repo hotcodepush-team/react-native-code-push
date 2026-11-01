@@ -55,7 +55,7 @@
 
 - (void)consumeUpdateRolledBack:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
 {
-  [self invoke:@"consumeUpdateRolledBack" options:@{} resolve:resolve reject:reject];
+  resolve([HotCodePushRuntime.shared consumeUpdateRolledBack]);
 }
 
 - (void)downloadUpdate:(NSDictionary *)options

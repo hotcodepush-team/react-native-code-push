@@ -14,6 +14,7 @@ import org.mockito.Mockito.mockConstruction
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.File
 
@@ -50,6 +51,7 @@ class HotCodePushRuntimeTest {
             assertEquals(bundlePath, askForBundle())
             val core = cores.constructed().single()
             verify(core).handleAppStartBlocking(false)
+            verify(core).observeAppLifecycle(RuntimeEnvironment.getApplication())
             verifyNoMoreInteractions(core)
         }
     }

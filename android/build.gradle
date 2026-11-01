@@ -39,7 +39,10 @@ kotlin {
 repositories {
     google()
     mavenCentral()
-    maven { url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/' }
+    maven {
+        url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/'
+        content { includeGroup 'com.hotcodepush' }
+    }
 }
 
 dependencies {

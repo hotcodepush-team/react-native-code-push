@@ -58,7 +58,7 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
     rmSync(buildDirectoryPath, { force: true, recursive: true });
   });
 
-  it('should run binary create when the build is an archive', () => {
+  it('should run binary create with the version and build of the processed Info.plist, which the device reports, when the build is an archive', () => {
     expect(
       runScript({ CONFIGURATION: 'Release', DEPLOYMENT_POSTPROCESSING: 'YES' }),
     ).toEqual([
@@ -94,19 +94,9 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
     ]);
   });
 
-  it('should pass the version and build of the processed Info.plist, which the device reports, when the build is an archive', () => {
-    const args = runScript({
-      CONFIGURATION: 'Release',
-      DEPLOYMENT_POSTPROCESSING: 'YES',
-    });
-
-    expect(readOption(args, '--binary-version')).toBe('2.4.1');
-    expect(readOption(args, '--binary-build')).toBe('57');
-  });
-
-  it('should pass a directory without the bundle when the configuration is Debug on a device', () => {
+  it('should pass a directory without the bundle when the configuration is Debug', () => {
     const embeddedAssetsPath = readOption(
-      runScript({ CONFIGURATION: 'Debug', PLATFORM_NAME: 'iphoneos' }),
+      runScript({ CONFIGURATION: 'Debug' }),
       '--embedded-bundle-path',
     );
 
@@ -114,14 +104,8 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
     expect(readdirSync(embeddedAssetsPath)).toEqual([]);
   });
 
-  it('should pass a directory without the bundle when the configuration is Debug on a simulator', () => {
-    const embeddedAssetsPath = readOption(
-      runScript({ CONFIGURATION: 'Debug', PLATFORM_NAME: 'iphonesimulator' }),
-      '--embedded-bundle-path',
-    );
-
-    expect(embeddedAssetsPath).not.toBe(appPath);
-    expect(readdirSync(embeddedAssetsPath)).toEqual([]);
+  it('should fail naming .xcode.env when the phase passes no Node', () => {
+    expect(() => runScript({ NODE_BINARY: '' })).toThrow(/\.xcode\.env/);
   });
 
   function readOption(args: string[], flag: string): string {
@@ -144,12 +128,12 @@ describe.skipIf(process.platform !== 'darwin')('binary-create-xcode.sh', () => {
         MARKETING_VERSION: '1.0',
         NODE_BINARY: join(buildDirectoryPath, 'bin', 'node'),
         PATH: '/usr/bin:/bin',
-        PLATFORM_NAME: 'iphoneos',
         PROJECT_ROOT: buildDirectoryPath,
         TARGET_BUILD_DIR: buildDirectoryPath,
         UNLOCALIZED_RESOURCES_FOLDER_PATH: APP_NAME,
         ...buildSettings,
       },
+      stdio: 'pipe',
     });
     return readFileSync(join(buildDirectoryPath, 'bin', 'arguments'), 'utf8')
       .trimEnd()

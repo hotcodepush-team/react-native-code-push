@@ -11,8 +11,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// A podspec cannot download the core XCFramework the pod vendors, so every build fetches the release asset
-// pinned under hotcodepush.coreIos in package.json, checks its checksum and unpacks it into the ignored ios/Frameworks.
+// A podspec cannot download the core XCFramework that the pod vendors.
+// So every build fetches the release asset that package.json pins under hotcodepush.coreIos, checks its checksum and unpacks it into the ignored ios/Frameworks.
 
 const packageDirectory = join(dirname(fileURLToPath(import.meta.url)), '..');
 const frameworksDirectory = join(packageDirectory, 'ios/Frameworks');

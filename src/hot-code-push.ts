@@ -36,8 +36,8 @@ const cycleListeners = new Set<CycleListener>();
 const subscriptions = new Set<NativeSubscription>();
 const updateRolledBackListeners = new Set<EventListener>();
 
-// The native side hands out the kept event only once, so the first listener caches it for the others.
-let keptUpdateRolledBackEvent: Promise<object | null> | undefined;
+// The native side hands out the retained event only once, so the first listener caches it for the others.
+let retainedUpdateRolledBackEvent: Promise<object | null> | undefined;
 let runningCycleCount = 0;
 
 /**
@@ -182,11 +182,11 @@ function addNativeListener(
 function addUpdateRolledBackListener(
   listener: EventListener,
 ): HotCodePushListenerHandle {
-  keptUpdateRolledBackEvent ??= requireNativeModule()
+  retainedUpdateRolledBackEvent ??= requireNativeModule()
     .consumeUpdateRolledBack()
     .then(result => (result as { event: object | null }).event);
   updateRolledBackListeners.add(listener);
-  void keptUpdateRolledBackEvent.then(event => {
+  void retainedUpdateRolledBackEvent.then(event => {
     if (event !== null && updateRolledBackListeners.has(listener)) {
       listener(event);
     }
