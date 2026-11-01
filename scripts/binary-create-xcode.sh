@@ -30,6 +30,10 @@ else
 fi
 
 # Xcode's PATH has no Node. React Native's .xcode.env names the Node binary, and npx sits beside it.
+if [ -z "$NODE_BINARY" ]; then
+  echo "error: HotCodePush found no Node to run its build step; name it in $PROJECT_DIR/.xcode.env: export NODE_BINARY=/path/to/node" >&2
+  exit 1
+fi
 PATH="$(dirname "$NODE_BINARY"):$PATH"
 export PATH
 
