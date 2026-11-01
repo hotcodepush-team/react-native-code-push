@@ -7,7 +7,10 @@ import org.gradle.api.tasks.Optional
 
 // The app resolves the core from core-android's maven branch until the library is on Maven Central.
 repositories {
-    maven { url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/' }
+    maven {
+        url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/'
+        content { includeGroup 'com.hotcodepush' }
+    }
 }
 
 abstract class HotCodePushBinaryCreateTask extends DefaultTask {
