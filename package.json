@@ -66,12 +66,12 @@
   },
   "hotcodepush": {
     "coreIos": {
-      "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.2.0/HotCodePushCore.xcframework.zip",
-      "checksum": "cb33348bd301eebcbae22532efb235e2136141f18a35b6fc190bc1724641c0bf"
+      "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.3.0/HotCodePushCore.xcframework.zip",
+      "checksum": "6d12e0613ce25748963f0ff492a6e33687a25bf291d94e2950d5b1867bbc3685"
     }
   },
   "dependencies": {
-    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@f6b26e1"
+    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@9c38d6a"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
