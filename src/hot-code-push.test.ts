@@ -33,6 +33,7 @@ describe('HotCodePush', () => {
 
   // Each test is a new app start, so the module loads fresh, as a new JavaScript instance loads it.
   beforeEach(async () => {
+    vi.resetAllMocks();
     vi.resetModules();
     NativeHotCodePush = (await import('./NativeHotCodePush')).default as Spec;
     ({ HotCodePush, subscribeToRunningCycles } =
@@ -40,7 +41,7 @@ describe('HotCodePush', () => {
   });
 
   describe('addListener', () => {
-    it('should hand the updateRolledBack event the native side kept to the listener', async () => {
+    it('should hand the updateRolledBack event the native side retained to the listener', async () => {
       vi.mocked(NativeHotCodePush.consumeUpdateRolledBack).mockResolvedValue({
         event: UPDATE_ROLLED_BACK_EVENT,
       });
@@ -67,7 +68,7 @@ describe('HotCodePush', () => {
       expect(secondListener).toHaveBeenCalledWith(UPDATE_ROLLED_BACK_EVENT);
     });
 
-    it('should call no updateRolledBack listener when the native side kept no event', async () => {
+    it('should call no updateRolledBack listener when the native side retained no event', async () => {
       vi.mocked(NativeHotCodePush.consumeUpdateRolledBack).mockResolvedValue({
         event: null,
       });
@@ -131,17 +132,6 @@ describe('HotCodePush', () => {
         applyStrategy: 'manual',
       });
     });
-
-    it('should pass an empty object when called without options', async () => {
-      vi.mocked(NativeHotCodePush.downloadUpdate).mockResolvedValue({
-        release: null,
-        status: 'up_to_date',
-      });
-
-      await HotCodePush.downloadUpdate();
-
-      expect(NativeHotCodePush.downloadUpdate).toHaveBeenCalledWith({});
-    });
   });
 
   describe('sync', () => {
@@ -175,17 +165,6 @@ describe('HotCodePush', () => {
 
       expect(counts).toEqual([0, 1, 0]);
     });
-
-    it('should pass an empty object when called without options', async () => {
-      vi.mocked(NativeHotCodePush.sync).mockResolvedValue({
-        release: null,
-        status: 'up_to_date',
-      });
-
-      await HotCodePush.sync();
-
-      expect(NativeHotCodePush.sync).toHaveBeenCalledWith({});
-    });
   });
 
   describe('rollbackUpdate', () => {
@@ -196,19 +175,19 @@ describe('HotCodePush', () => {
         reason: 'the checkout crashed',
       });
     });
-
-    it('should pass an empty object when called without options', async () => {
-      await HotCodePush.rollbackUpdate();
-
-      expect(NativeHotCodePush.rollbackUpdate).toHaveBeenCalledWith({});
-    });
   });
 
-  describe('setChannel', () => {
-    it('should pass an empty object when the runtime choice is cleared', async () => {
-      await HotCodePush.setChannel(null);
+  it.each([
+    ['downloadUpdate', () => HotCodePush.downloadUpdate()],
+    ['rollbackUpdate', () => HotCodePush.rollbackUpdate()],
+    ['setChannel', () => HotCodePush.setChannel(null)],
+    ['sync', () => HotCodePush.sync()],
+  ] as const)(
+    'should pass an empty object to the native %s when called without options',
+    async (methodName, call) => {
+      await call();
 
-      expect(NativeHotCodePush.setChannel).toHaveBeenCalledWith({});
-    });
-  });
+      expect(NativeHotCodePush[methodName]).toHaveBeenCalledWith({});
+    },
+  );
 });
