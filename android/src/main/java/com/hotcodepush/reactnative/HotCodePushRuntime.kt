@@ -1,9 +1,7 @@
 package com.hotcodepush.reactnative
 
-import android.app.Activity
 import android.app.Application
 import android.content.Context
-import android.os.Bundle
 import android.util.Log
 import com.facebook.react.ReactApplication
 import com.facebook.react.bridge.JSBundleLoader
@@ -145,20 +143,8 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
             scheduler = scheduler,
         )
         this.core = core
-        observeAppLifecycle(core)
+        (context.applicationContext as? Application)?.let(core::observeAppLifecycle)
         return core
-    }
-
-    private fun observeAppLifecycle(core: Core) {
-        (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object : ActivityLifecycleObserver() {
-            override fun onActivityPaused(activity: Activity) {
-                scope.launch { core.handleAppPause() }
-            }
-
-            override fun onActivityResumed(activity: Activity) {
-                scope.launch { core.handleAppResume() }
-            }
-        })
     }
 
     private fun reloadReactNative() {
@@ -198,16 +184,4 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         fun get(context: Context): HotCodePushRuntime =
             instance ?: synchronized(this) { instance ?: HotCodePushRuntime(context.applicationContext).also { instance = it } }
     }
-}
-
-private abstract class ActivityLifecycleObserver : Application.ActivityLifecycleCallbacks {
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
-
-    override fun onActivityDestroyed(activity: Activity) = Unit
-
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
-
-    override fun onActivityStarted(activity: Activity) = Unit
-
-    override fun onActivityStopped(activity: Activity) = Unit
 }
