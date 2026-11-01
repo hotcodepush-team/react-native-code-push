@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a capability this repository does not have
+title: 'feat: '
+labels: ['type/feature', 'state/needs-triage']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: The problem you are trying to solve, not the solution you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: What you want to happen.
+    validations:
+      required: true
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Platform(s)
+      description: The platforms the feature is for.
+      options:
+        - label: Android
+        - label: iOS
+        - label: Web
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other solutions or workarounds you looked at.
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Anything else that helps us understand the request.
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would implement this.
+  - type: checkboxes
+    id: before-submitting
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have searched the existing issues and discussions.
+          required: true
+        - label: This request is about one feature.
+          required: true
