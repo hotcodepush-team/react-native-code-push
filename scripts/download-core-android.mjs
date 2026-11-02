@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -58,10 +59,14 @@ if (actualChecksum !== checksum) {
   );
 }
 
-const archiveFile = join(tmpdir(), `core-android-${checksum}.zip`);
-writeFileSync(archiveFile, archive);
-rmSync(libsDirectory, { recursive: true, force: true });
-mkdirSync(mavenDirectory, { recursive: true });
-execFileSync('unzip', ['-q', archiveFile, '-d', mavenDirectory]);
-rmSync(archiveFile);
+const temporaryDirectory = mkdtempSync(join(tmpdir(), 'core-android-'));
+try {
+  const archiveFile = join(temporaryDirectory, 'core-android.zip');
+  writeFileSync(archiveFile, archive);
+  rmSync(libsDirectory, { recursive: true, force: true });
+  mkdirSync(mavenDirectory, { recursive: true });
+  execFileSync('unzip', ['-q', archiveFile, '-d', mavenDirectory]);
+} finally {
+  rmSync(temporaryDirectory, { recursive: true, force: true });
+}
 writeFileSync(checksumFile, checksum);

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -46,10 +47,17 @@ if (actualChecksum !== checksum) {
   );
 }
 
-const archiveFile = join(tmpdir(), `HotCodePushCore-${checksum}.zip`);
-writeFileSync(archiveFile, archive);
-rmSync(frameworksDirectory, { recursive: true, force: true });
-mkdirSync(frameworksDirectory, { recursive: true });
-execFileSync('unzip', ['-q', archiveFile, '-d', frameworksDirectory]);
-rmSync(archiveFile);
+const temporaryDirectory = mkdtempSync(join(tmpdir(), 'HotCodePushCore-'));
+try {
+  const archiveFile = join(
+    temporaryDirectory,
+    'HotCodePushCore.xcframework.zip',
+  );
+  writeFileSync(archiveFile, archive);
+  rmSync(frameworksDirectory, { recursive: true, force: true });
+  mkdirSync(frameworksDirectory, { recursive: true });
+  execFileSync('unzip', ['-q', archiveFile, '-d', frameworksDirectory]);
+} finally {
+  rmSync(temporaryDirectory, { recursive: true, force: true });
+}
 writeFileSync(checksumFile, checksum);
