@@ -43,7 +43,7 @@ private class ResourcePath(val type: String, val name: String) {
             val segments = path.split('/')
             if (segments.size != 2) return null
             val type = segments[0].substringBefore('-')
-            return if (type in RESOURCE_TYPES) ResourcePath(type, segments[1].substringBeforeLast('.')) else null
+            return if (type in RESOURCE_TYPES) ResourcePath(type = type, name = segments[1].substringBeforeLast('.')) else null
         }
     }
 }
