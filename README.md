@@ -57,7 +57,7 @@ See [hotcodepush.com/docs/sdks/react-native](https://hotcodepush.com/docs/sdks/r
 ```sh
 nvm use
 npm ci
-npm run build            # the TypeScript into dist/ and the iOS core into ios/Frameworks; run it before opening the native projects
+npm run build            # the TypeScript into dist/ and the cores into ios/Frameworks and android/libs; run it before opening the native projects
 npm test
 npm run lint && npm run typecheck
 npm run verify:android   # the Android library's build and Robolectric tests

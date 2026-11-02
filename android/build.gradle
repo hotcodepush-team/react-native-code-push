@@ -35,19 +35,19 @@ kotlin {
     }
 }
 
-// The core comes from core-android's maven branch at a pinned commit until the library is on Maven Central.
+// The core comes from its release asset, which scripts/download-core-android.mjs unpacks into libs/m2, until the library is on Maven Central.
 repositories {
     google()
     mavenCentral()
     maven {
-        url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/'
+        url = file('libs/m2')
         content { includeGroup 'com.hotcodepush' }
     }
 }
 
 dependencies {
     implementation 'com.facebook.react:react-android'
-    implementation 'com.hotcodepush:core-android:a5bfc4aeede98739302f49510766a6f5decb9299'
+    implementation 'com.hotcodepush:core-android:0.1.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.20.0'

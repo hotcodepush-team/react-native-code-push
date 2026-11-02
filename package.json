@@ -28,12 +28,14 @@
   "files": [
     "android/build.gradle",
     "android/hotcodepush.gradle",
+    "android/libs/m2/",
     "android/src/main/",
     "dist/",
     "ios/",
     "!ios/Frameworks/HotCodePushCore.checksum",
     "scripts/",
     "!scripts/*.test.ts",
+    "!scripts/download-core-android.mjs",
     "!scripts/download-core-ios.mjs",
     "!scripts/write-sdk-version.mjs",
     "src/",
@@ -42,14 +44,14 @@
     "HotcodepushReactNativeCodePush.podspec"
   ],
   "scripts": {
-    "build": "npm run clean && node scripts/write-sdk-version.mjs && node scripts/download-core-ios.mjs && tsc --project tsconfig.build.json",
+    "build": "npm run clean && node scripts/write-sdk-version.mjs && node scripts/download-core-android.mjs && node scripts/download-core-ios.mjs && tsc --project tsconfig.build.json",
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet ios",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
-    "verify:android": "node scripts/write-sdk-version.mjs && cd android && ./gradlew build --console=plain"
+    "verify:android": "node scripts/write-sdk-version.mjs && node scripts/download-core-android.mjs && cd android && ./gradlew build --console=plain"
   },
   "codegenConfig": {
     "name": "HotCodePushSpec",
@@ -65,6 +67,10 @@
     }
   },
   "hotcodepush": {
+    "coreAndroid": {
+      "version": "0.1.0",
+      "checksum": "7c9b91381c5c99bf9e2592fd14e912972f0bb8f3df1b0a3c340a75ca5ef3a65b"
+    },
     "coreIos": {
       "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.3.0/HotCodePushCore.xcframework.zip",
       "checksum": "6d12e0613ce25748963f0ff492a6e33687a25bf291d94e2950d5b1867bbc3685"
