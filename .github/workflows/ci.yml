@@ -166,7 +166,7 @@ jobs:
           cp ../demo/hotcodepush.json .
           node --input-type=module --eval "
             import { readFileSync } from 'node:fs';
-            import { reactNativeFramework } from 'hotcodepush/dist/frameworks/react-native.js';
+            import { reactNativeFramework } from 'hotcodepush/frameworks/react-native';
             const project = { directoryPath: process.cwd(), packageJson: JSON.parse(readFileSync('package.json', 'utf8')) };
             const wiring = await reactNativeFramework.resolveWiring(project, { yes: true });
             console.log((await wiring.wireBinaryCreateStep(undefined)).message);
