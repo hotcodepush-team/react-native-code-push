@@ -23,7 +23,11 @@ import java.io.File
 class HotCodePushRuntimeTest {
     private val context = contextWithResourceFile()
     private val runtime = HotCodePushRuntime(context)
-    private val bundleLoader = ReactNativeBundleLoader(SharedPreferencesStore(context), File(context.filesDir, "hotcodepush")) {}
+    private val bundleLoader = ReactNativeBundleLoader(
+        store = SharedPreferencesStore(context),
+        storeDirectory = File(context.filesDir, "hotcodepush"),
+        reloadReactNative = {},
+    )
     private val embeddedBundleLoader = JSBundleLoader.createAssetLoader(context, EMBEDDED_BUNDLE_URL, true)
 
     @Test

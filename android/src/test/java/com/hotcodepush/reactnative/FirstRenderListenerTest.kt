@@ -31,7 +31,11 @@ class FirstRenderListenerTest {
     private val reactRoot = TestReactRoot(context)
     private val uiManager: UIManager = mock(UIManager::class.java)
     private var requestedReloads = 0
-    private val loader = ReactNativeBundleLoader(SharedPreferencesStore(context), File(context.filesDir, "hotcodepush")) { requestedReloads++ }
+    private val loader = ReactNativeBundleLoader(
+        store = SharedPreferencesStore(context),
+        storeDirectory = File(context.filesDir, "hotcodepush"),
+        reloadReactNative = { requestedReloads++ },
+    )
     private var renders = 0
 
     @Test
@@ -92,7 +96,7 @@ class FirstRenderListenerTest {
         assertEquals(1, renders)
     }
 
-    private fun createListener() = FirstRenderListener(loader, { decorView }) { renders++ }
+    private fun createListener() = FirstRenderListener(loader = loader, readDecorView = { decorView }, onRendered = { renders++ })
 
     // React Native clears the views of the replaced instance first, then the host asks for the new bundle.
     private fun reloadAsReactNativeDoes(bundleId: String) {

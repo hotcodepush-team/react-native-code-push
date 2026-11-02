@@ -38,7 +38,11 @@ interface HotCodePushEventSink {
 class HotCodePushRuntime internal constructor(private val context: Context) : CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val loader = ReactNativeBundleLoader(SharedPreferencesStore(context), FileStore.defaultRootDirectory(context), ::reloadReactNative)
+    private val loader = ReactNativeBundleLoader(
+        store = SharedPreferencesStore(context),
+        storeDirectory = FileStore.defaultRootDirectory(context),
+        reloadReactNative = ::reloadReactNative,
+    )
 
     @Volatile private var core: Core? = null
 
@@ -72,7 +76,12 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     @OptIn(UnstableReactNativeAPI::class)
     fun observeFirstRender(reactContext: ReactContext) {
         val uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC) ?: return
-        uiManager.addUIManagerEventListener(FirstRenderListener(loader, { reactContext.currentActivity?.window?.decorView }, ::reportRendered))
+        val listener = FirstRenderListener(
+            loader = loader,
+            readDecorView = { reactContext.currentActivity?.window?.decorView },
+            onRendered = ::reportRendered,
+        )
+        uiManager.addUIManagerEventListener(listener)
     }
 
     private fun reportRendered() {
@@ -136,7 +145,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
             context = context,
             configuration = configuration,
             device = device,
-            embedded = ApkEmbeddedBundle(context, configuration.embeddedBundleManifest),
+            embedded = ApkEmbeddedBundle(context = context, manifest = configuration.embeddedBundleManifest),
             loader = loader,
             listener = this,
             scope = scope,

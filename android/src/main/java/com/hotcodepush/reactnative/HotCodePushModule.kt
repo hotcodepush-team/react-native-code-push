@@ -119,17 +119,17 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
     }
 
     private fun downloadUpdateOptions(options: ReadableMap) = DownloadUpdateOptions(
-        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
-        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
+        applyStrategy = option(options, name = "applyStrategy", parse = ApplyStrategy::fromWire),
+        mandatoryApplyStrategy = option(options, name = "mandatoryApplyStrategy", parse = MandatoryApplyStrategy::fromWire),
     )
 
     private fun syncOptions(options: ReadableMap) = SyncOptions(
-        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
-        downloadStrategy = option("downloadStrategy", options, DownloadStrategy::fromWire),
-        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
+        applyStrategy = option(options, name = "applyStrategy", parse = ApplyStrategy::fromWire),
+        downloadStrategy = option(options, name = "downloadStrategy", parse = DownloadStrategy::fromWire),
+        mandatoryApplyStrategy = option(options, name = "mandatoryApplyStrategy", parse = MandatoryApplyStrategy::fromWire),
     )
 
-    private fun <T> option(name: String, options: ReadableMap, parse: (String?) -> T?): T? {
+    private fun <T> option(options: ReadableMap, name: String, parse: (String?) -> T?): T? {
         val raw = options.getStringOrNull(name) ?: return null
         return parse(raw) ?: throw PlainException("$name is not one of its choices: $raw")
     }
