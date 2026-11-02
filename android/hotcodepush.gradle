@@ -5,7 +5,7 @@ import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.tasks.Optional
 
-// The app resolves the core from the package's local Maven repository beside this file until the library is on Maven Central.
+// The app resolves the core from the package's local Maven repository beside this file.
 repositories {
     maven {
         url = new File(buildscript.sourceFile.parentFile, 'libs/m2')
