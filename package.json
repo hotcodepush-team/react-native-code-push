@@ -68,8 +68,8 @@
   },
   "hotcodepush": {
     "coreAndroid": {
-      "version": "0.1.0",
-      "checksum": "7c9b91381c5c99bf9e2592fd14e912972f0bb8f3df1b0a3c340a75ca5ef3a65b"
+      "version": "0.1.1",
+      "checksum": "f6ce90f6745519c6900d592b17872b94ba06213c964a5ac05df6d3866df6940f"
     },
     "coreIos": {
       "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.3.0/HotCodePushCore.xcframework.zip",
