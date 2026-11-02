@@ -1,19 +1,14 @@
 import type {
   ApplyUpdateResult,
   CheckForUpdateResult,
-  DownloadUpdateOptions,
   DownloadUpdateResult,
   GetChannelResult,
   GetDeviceResult,
   GetStateResult,
   HotCodePushEventName,
   HotCodePushEvents,
+  HotCodePushMethods,
   NotifyReadyResult,
-  RollbackUpdateOptions,
-  SetAttributesOptions,
-  SetChannelOptions,
-  SetRestartAllowedOptions,
-  SyncOptions,
   SyncResult,
 } from '@hotcodepush/protocol';
 import type { Spec } from './NativeHotCodePush';
@@ -44,60 +39,11 @@ let runningCycleCount = 0;
  * The methods of the HotCodePush React Native SDK.
  * `addListener` returns a handle whose `remove()` stops the listener.
  */
-export interface HotCodePush {
-  /**
-   * Runs one update cycle: fetch the index, evaluate it, download and verify, apply, report.
-   * It is the cycle the SDK runs on its own at start, resume and interval, and it stops at any `manual` strategy.
-   * A call while a cycle runs joins that cycle.
-   */
-  sync(options?: SyncOptions): Promise<SyncResult>;
-  /** Runs `sync()` with `downloadStrategy: 'manual'`: it checks for an update but downloads nothing. */
-  checkForUpdate(): Promise<CheckForUpdateResult>;
-  /**
-   * Runs `sync()` with `downloadStrategy: 'auto'`.
-   * It re-checks the index, downloads and verifies the update, and applies it as the apply strategies say.
-   */
-  downloadUpdate(
-    options?: DownloadUpdateOptions,
-  ): Promise<DownloadUpdateResult>;
-  /** Applies the downloaded update now, whatever the strategy says, and reloads the app. */
-  applyUpdate(): Promise<ApplyUpdateResult>;
-  /** Ends the readiness gate when `readySignal` is `manual`. Safe to call at any time with any setting. */
-  notifyReady(): Promise<NotifyReadyResult>;
-  /**
-   * Rolls back the running release now and reloads the app.
-   * The bundle is marked as failed on this device, and the rollback is reported as `app_requested`.
-   */
-  rollbackUpdate(options?: RollbackUpdateOptions): Promise<void>;
-  /**
-   * Clears all downloaded updates and the list of failed bundles, then reloads the app.
-   * The channel and the attributes stay.
-   */
-  clearUpdates(): Promise<void>;
-  /**
-   * Holds or allows the restart the SDK performs on its own.
-   * With `isAllowed: false`, the restart after an `immediate` apply, a `next_resume` apply or a mandatory release waits until `isAllowed: true` runs it.
-   * Restarts the app asks for (`applyUpdate()`, `rollbackUpdate()`, `clearUpdates()`) are never held.
-   * Not persisted: every start begins allowed.
-   */
-  setRestartAllowed(options: SetRestartAllowedOptions): Promise<void>;
-  /** Returns a snapshot of the SDK state. */
-  getState(): Promise<GetStateResult>;
-  /** Returns the channel in effect and its source. */
-  getChannel(): Promise<GetChannelResult>;
-  /** Switches the device to a channel by name or ID. `null` clears the runtime choice. */
-  setChannel(options: SetChannelOptions): Promise<void>;
-  /** Returns the device facts that the device report carries. */
-  getDevice(): Promise<GetDeviceResult>;
-  /** Merges string attributes for `attribute` conditions. A `null` value removes the key. */
-  setAttributes(options: SetAttributesOptions): Promise<void>;
-  /** Opens the SDK's native debug screen. */
-  showDebugScreen(): Promise<void>;
+export interface HotCodePush extends HotCodePushMethods {
   addListener<EventName extends HotCodePushEventName>(
     eventName: EventName,
     listener: (event: HotCodePushEvents[EventName]) => void,
   ): Promise<HotCodePushListenerHandle>;
-  removeAllListeners(): Promise<void>;
 }
 
 /**
