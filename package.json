@@ -68,12 +68,12 @@
   },
   "hotcodepush": {
     "coreAndroid": {
-      "version": "0.1.1",
-      "checksum": "f6ce90f6745519c6900d592b17872b94ba06213c964a5ac05df6d3866df6940f"
+      "version": "0.2.0",
+      "checksum": "df915251521fcd0b519be9cfe1b5fb1896efb30954e885816573f26bb4a8b142"
     },
     "coreIos": {
-      "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.3.0/HotCodePushCore.xcframework.zip",
-      "checksum": "6d12e0613ce25748963f0ff492a6e33687a25bf291d94e2950d5b1867bbc3685"
+      "url": "https://github.com/hotcodepush-team/core-ios/releases/download/0.4.0/HotCodePushCore.xcframework.zip",
+      "checksum": "0ac3338f1f8e0e2c4c79cf5cb00d70a078fd25a17e2586fc7ff1edee7166d941"
     }
   },
   "dependencies": {

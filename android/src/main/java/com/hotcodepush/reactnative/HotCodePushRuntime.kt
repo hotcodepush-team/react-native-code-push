@@ -10,8 +10,9 @@ import com.facebook.react.bridge.ReactContext
 import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.common.UIManagerType
-import com.hotcodepush.core.ActivityManagerProcessState
+import com.hotcodepush.core.ActivityManagerAppState
 import com.hotcodepush.core.Configuration
+import com.hotcodepush.core.ConfigurationLoadResult
 import com.hotcodepush.core.Core
 import com.hotcodepush.core.CoreListener
 import com.hotcodepush.core.DeviceFacts
@@ -67,7 +68,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     // serves the running bundle without telling the core.
     private fun resolveServedBundleId(): String? {
         val requestedReload = loader.beginBundleRequest()
-        if (claimStart()) return createCore(isServedBySdk = true)?.handleAppStartBlocking(isHeadless = !ActivityManagerProcessState.isInForeground())
+        if (claimStart()) return createCore(isServedBySdk = true)?.handleAppStartBlocking(isHeadless = !ActivityManagerAppState.isInForeground())
         return if (requestedReload != null) requestedReload.bundleId else loader.runningBundleId
     }
 
@@ -127,16 +128,7 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
     }
 
     private fun createCore(isServedBySdk: Boolean): Core? {
-        val readConfiguration = try {
-            Configuration.read(context)
-        } catch (refusal: Exception) {
-            notConfiguredMessage = Configuration.resolveRefusedMessage(refusal)
-            null
-        }
-        if (readConfiguration == null) {
-            Log.e(TAG, notConfiguredMessage)
-            return null
-        }
+        val readConfiguration = loadConfiguration() ?: return null
         if (!isServedBySdk) Log.w(TAG, NOT_SERVED_MESSAGE)
         // A run whose JavaScript the SDK does not serve counts as a debug build, and `isEnabledInDebugBuilds` is off.
         val configuration = if (isServedBySdk) readConfiguration else readConfiguration.copy(isEnabledInDebugBuilds = false)
@@ -154,6 +146,15 @@ class HotCodePushRuntime internal constructor(private val context: Context) : Co
         this.core = core
         (context.applicationContext as? Application)?.let(core::observeAppLifecycle)
         return core
+    }
+
+    private fun loadConfiguration(): Configuration? = when (val result = Configuration.load(context)) {
+        is ConfigurationLoadResult.Loaded -> result.configuration
+        is ConfigurationLoadResult.NotConfigured -> {
+            notConfiguredMessage = result.message
+            Log.e(TAG, result.message)
+            null
+        }
     }
 
     private fun reloadReactNative() {
