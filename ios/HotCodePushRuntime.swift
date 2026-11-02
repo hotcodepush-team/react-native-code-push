@@ -97,17 +97,7 @@ private let isDebugBuild = false
     }
 
     private func createCore(isServedBySdk: Bool) -> Core? {
-        let readConfiguration: Configuration?
-        do {
-            readConfiguration = try Configuration.read()
-        } catch {
-            notConfiguredMessage = Configuration.resolveRefusedMessage(error)
-            readConfiguration = nil
-        }
-        guard var configuration = readConfiguration else {
-            NSLog("[HotCodePush] %@", notConfiguredMessage)
-            return nil
-        }
+        guard var configuration = loadConfiguration() else { return nil }
         var device = DeviceFacts.current(sdkVersion: sdkVersion, isDebugBuild: isDebugBuild)
         // The SDK does not serve this run's JavaScript, so it counts as a debug build and `isEnabledInDebugBuilds` is off.
         if !isServedBySdk {
@@ -126,6 +116,17 @@ private let isDebugBuild = false
         NotificationCenter.default.addObserver(self, selector: #selector(handleContentDidAppear), name: HotCodePushRuntime.contentDidAppearNotification, object: nil)
         core.observeAppLifecycle()
         return core
+    }
+
+    private func loadConfiguration() -> Configuration? {
+        switch Configuration.load() {
+        case .loaded(let configuration):
+            return configuration
+        case .notConfigured(let message):
+            notConfiguredMessage = message
+            NSLog("[HotCodePush] %@", message)
+            return nil
+        }
     }
 
     // The first frame after the root view renders is the `render` readiness signal and, for any `readySignal`, the moment the core's restarts wait for.
