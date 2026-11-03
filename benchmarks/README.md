@@ -33,7 +33,7 @@ The simulator app grows by about 3.5 MB, nearly all of it in the `HotCodePushDem
 
 ```sh
 npm run build && npm pack --pack-destination /tmp
-node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-react-native-code-push-0.0.0.tgz
+node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-react-native-code-push-*.tgz
 node benchmarks/prepare-demo.mjs ../react-native-code-push-demo /tmp/baseline/without without
 node benchmarks/measure-size.mjs /tmp/baseline/with
 node benchmarks/measure-size.mjs /tmp/baseline/without

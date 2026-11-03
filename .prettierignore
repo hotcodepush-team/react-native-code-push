@@ -4,3 +4,7 @@ dist
 ios
 node_modules
 package-lock.json
+
+# Written by release-please
+.release-please-manifest.json
+CHANGELOG.md
