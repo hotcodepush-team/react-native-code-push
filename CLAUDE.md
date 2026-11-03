@@ -56,6 +56,12 @@ Consumers pin the preview builds pkg.pr.new publishes from `ci.yml` on every pus
 A consumer pins a commit and bumps it deliberately — never `@main`, whose moving content breaks `npm ci` against the lockfile's integrity hash.
 The shared types come from `@hotcodepush/protocol` the same way, pinned to a commit in `package.json`; a protocol change is a bump of that sha.
 
+## Releases
+
+Release-please keeps a release pull request open on `main`, and merging it tags the release.
+`release.yml` then publishes to npm with provenance over OIDC, `prepublishOnly` running the build first, so the package carries the cores the build downloads.
+A published package never depends on a pkg.pr.new URL: the protocol pin above moves to its npm release, `^0.1.0`, before this package's first release.
+
 ## Rules
 
 - The SDK never sees an API DTO: its contract is the channel index, the bundle manifest and the events endpoint, additive only.

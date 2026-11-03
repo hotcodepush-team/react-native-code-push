@@ -1,10 +1,10 @@
 {
   "name": "@hotcodepush/react-native-code-push",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "React Native code push by HotCodePush: the module that delivers over-the-air (OTA) updates to your React Native app",
   "license": "MIT",
   "author": "Genz IT Solutions GmbH",
-  "homepage": "https://hotcodepush.com/react-native-code-push",
+  "homepage": "https://hotcodepush.com/docs/sdks/react-native",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hotcodepush-team/react-native-code-push.git"
@@ -48,6 +48,7 @@
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet ios",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict ios",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
