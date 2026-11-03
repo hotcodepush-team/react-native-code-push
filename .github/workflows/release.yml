@@ -43,4 +43,6 @@ jobs:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
       - run: npm ci
+      - name: Refuse a pkg.pr.new dependency, which npm would publish as it is
+        run: '! grep -qF pkg.pr.new package.json'
       - run: npm publish --provenance --access public
