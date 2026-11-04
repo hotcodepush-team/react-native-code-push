@@ -1,6 +1,6 @@
 {
   "name": "@hotcodepush/react-native-code-push",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "React Native code push by HotCodePush: the module that delivers over-the-air (OTA) updates to your React Native app",
   "license": "MIT",
   "author": "Genz IT Solutions GmbH",
