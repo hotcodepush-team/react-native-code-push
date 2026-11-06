@@ -19,7 +19,17 @@
     "live updates",
     "ota updates",
     "over-the-air updates",
-    "hot code push"
+    "hot code push",
+    "code-push",
+    "hot-code-push",
+    "live-update",
+    "live-updates",
+    "ota",
+    "ota-update",
+    "ota-updates",
+    "over-the-air",
+    "over-the-air-updates",
+    "react-native-code-push"
   ],
   "main": "dist/index.js",
   "module": "dist/index.js",
