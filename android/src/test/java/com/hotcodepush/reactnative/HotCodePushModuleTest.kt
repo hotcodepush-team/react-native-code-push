@@ -22,22 +22,31 @@ import java.util.concurrent.TimeUnit
 class HotCodePushModuleTest {
     @Test
     fun shouldRejectTheSyncWhenItsApplyStrategyIsNotOneOfItsChoices() {
+        val (code, message, exception) = rejectionOf { module, promise -> module.sync(JavaOnlyMap.of("applyStrategy", "soon"), promise) }
+
+        assertEquals(HotCodePushModule.REJECTION_CODE, code)
+        assertEquals("applyStrategy is not one of its choices: soon", message)
+        assertTrue(exception is PlainException)
+    }
+
+    @Test
+    fun shouldRejectSetAttributesWhenItsAttributesAreMissing() {
+        val (code, message) = rejectionOf { module, promise -> module.setAttributes(JavaOnlyMap.of("plan", "enterprise"), promise) }
+
+        assertEquals(HotCodePushModule.REJECTION_CODE, code)
+        assertEquals("attributes must be an object", message)
+    }
+
+    private fun rejectionOf(call: (module: HotCodePushModule, promise: Promise) -> Unit): List<Any?> =
         mockConstruction(Core::class.java).use {
-            val module = HotCodePushModule(reactContext())
             val rejection = CompletableFuture<List<Any?>>()
             val promise = mock(Promise::class.java) { invocation ->
                 if (invocation.method.name == "reject") rejection.complete(invocation.arguments.toList())
                 null
             }
-
-            module.sync(JavaOnlyMap.of("applyStrategy", "soon"), promise)
-
-            val (code, message, exception) = rejection.get(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            assertEquals(HotCodePushModule.REJECTION_CODE, code)
-            assertEquals("applyStrategy is not one of its choices: soon", message)
-            assertTrue(exception is PlainException)
+            call(HotCodePushModule(reactContext()), promise)
+            rejection.get(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         }
-    }
 
     // The runtime reads the resource file through the application context.
     private fun reactContext(): ReactApplicationContext {

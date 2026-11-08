@@ -60,13 +60,18 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
     }
 
     override fun setAttributes(options: ReadableMap, promise: Promise) {
+        val attributes = options.getMapOrNull("attributes")
+        if (attributes == null) {
+            promise.reject(REJECTION_CODE, "attributes must be an object")
+            return
+        }
         val changes = mutableMapOf<String, String?>()
-        val keys = options.keySetIterator()
+        val keys = attributes.keySetIterator()
         while (keys.hasNextKey()) {
             val key = keys.nextKey()
-            when (options.getType(key)) {
+            when (attributes.getType(key)) {
                 ReadableType.Null -> changes[key] = null
-                ReadableType.String -> changes[key] = options.getString(key)
+                ReadableType.String -> changes[key] = attributes.getString(key)
                 else -> {
                     promise.reject(REJECTION_CODE, "An attribute value is a string or null: $key")
                     return
@@ -136,6 +141,9 @@ class HotCodePushModule(reactContext: ReactApplicationContext) : NativeHotCodePu
 
     private fun ReadableMap.getStringOrNull(key: String): String? =
         if (hasKey(key) && getType(key) == ReadableType.String) getString(key) else null
+
+    private fun ReadableMap.getMapOrNull(key: String): ReadableMap? =
+        if (hasKey(key) && getType(key) == ReadableType.Map) getMap(key) else null
 
     companion object {
         const val NAME = NativeHotCodePushSpec.NAME
