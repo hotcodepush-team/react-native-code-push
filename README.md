@@ -72,7 +72,9 @@ Prefer to wire it yourself? The [installation guide](https://hotcodepush.com/doc
 
 ## Usage
 
-**Sync and read the result.** With the default `checkStrategy` of `auto`, the SDK checks on start, on resume and in the foreground, and `sync()` runs one cycle on demand. Applying an update reloads the JavaScript without restarting the app.
+### Sync and read the result
+
+With the default `checkStrategy` of `auto`, the SDK checks on start, on resume and in the foreground, and `sync()` runs one cycle on demand. Applying an update reloads the JavaScript without restarting the app.
 
 ```tsx
 import { HotCodePush } from '@hotcodepush/react-native-code-push';
@@ -85,7 +87,9 @@ if (result.status === 'downloaded') {
 }
 ```
 
-**Show your users what is happening.** The `useUpdates()` hook follows the five events and the state, so a badge, a progress bar or a restart prompt is a few lines:
+### Show your users what is happening
+
+The `useUpdates()` hook follows the five events and the state, so a badge, a progress bar or a restart prompt is a few lines:
 
 ```tsx
 import { HotCodePush, useUpdates } from '@hotcodepush/react-native-code-push';
@@ -113,7 +117,9 @@ function UpdateBanner() {
 }
 ```
 
-**Decide when an update lands.** Set `downloadStrategy` and `applyStrategy` to `manual` in `hotcodepush.json`, then download and apply at the moments you choose, and hold the SDK's own restarts while a flow must not be interrupted:
+### Decide when an update lands
+
+Set `downloadStrategy` and `applyStrategy` to `manual` in `hotcodepush.json`, then download and apply at the moments you choose, and hold the SDK's own restarts while a flow must not be interrupted:
 
 ```tsx
 await HotCodePush.setRestartAllowed({ isAllowed: false });
@@ -124,14 +130,18 @@ await HotCodePush.applyUpdate();
 
 A release that never renders is rolled back on its own, and `rollbackUpdate()` does the same on your call, so nothing above is needed for safety.
 
-**Target the right devices.** A release with an `--attribute plan=enterprise` condition reaches the devices that carry the attribute, and a beta switch in your settings screen is one call. The channel sticks until the app clears it with `setChannel(null)`:
+### Target the right devices
+
+A release with an `--attribute plan=enterprise` condition reaches the devices that carry the attribute, and a beta switch in your settings screen is one call. The channel sticks until the app clears it with `setChannel(null)`:
 
 ```tsx
 await HotCodePush.setAttributes({ plan: 'enterprise', userId: '42' });
 await HotCodePush.setChannel({ name: 'beta' });
 ```
 
-**See why a device did not update.** The debug screen shows the device id, the channel, the binary and the result of the last check, the first stop for a device that did not update. `getState()` gives the same to your own diagnostics:
+### See why a device did not update
+
+The debug screen shows the device id, the channel, the binary and the result of the last check, the first stop for a device that did not update. `getState()` gives the same to your own diagnostics:
 
 ```tsx
 await HotCodePush.showDebugScreen();
