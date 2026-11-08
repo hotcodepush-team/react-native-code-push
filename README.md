@@ -135,7 +135,9 @@ A release that never renders is rolled back on its own, and `rollbackUpdate()` d
 A release with an `--attribute plan=enterprise` condition reaches the devices that carry the attribute, and a beta switch in your settings screen is one call. The channel sticks until the app clears it with `setChannel(null)`:
 
 ```tsx
-await HotCodePush.setAttributes({ plan: 'enterprise', userId: '42' });
+await HotCodePush.setAttributes({
+  attributes: { plan: 'enterprise', userId: '42' },
+});
 await HotCodePush.setChannel({ name: 'beta' });
 ```
 
