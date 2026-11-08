@@ -7,7 +7,7 @@
 `@hotcodepush/react-native-code-push` is the React Native module that delivers over-the-air (OTA) updates to your app. Ship a JavaScript fix with one command, reach every installed app within seconds, and roll it back from the console if something goes wrong. No store review, no new build.
 Learn more at [hotcodepush.com/react-native-code-push](https://hotcodepush.com/react-native-code-push).
 
-<a href="https://hotcodepush.com/docs/quickstart">
+<a href="https://hotcodepush.com/">
   <img alt="Ship updates in seconds. Over-the-air updates for React Native, Expo, Capacitor and Cordova. Get started." src="https://hotcodepush.com/assets/banners/readme-banner-ember.png" width="100%" />
 </a>
 
