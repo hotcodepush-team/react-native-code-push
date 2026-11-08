@@ -50,17 +50,17 @@ This package keeps what is React Native's: which bundle the host loads, the relo
 Run `npm run fmt` before every commit.
 The iOS code compiles only inside an app: `ci.yml` builds the demo with the package from the commit, packed after `npm run build` so the pod carries the core; `benchmarks/prepare-demo.mjs` drops a core pod line the demo's Podfile still pins. The Android library also builds on its own: `android/settings.gradle` resolves React Native from the devDependency, so Codegen runs on the host, and `verify:android` runs its Robolectric tests in their own `ci.yml` job.
 
-## Dependencies during the build phase
+## Dependencies
 
-Consumers pin the preview builds pkg.pr.new publishes from `ci.yml` on every push to `main` and every pull request, never npm: `npm install https://pkg.pr.new/hotcodepush-team/react-native-code-push/@hotcodepush/react-native-code-push@<sha>`.
-A consumer pins a commit and bumps it deliberately — never `@main`, whose moving content breaks `npm ci` against the lockfile's integrity hash.
-The shared types come from `@hotcodepush/protocol` the same way, pinned to a commit in `package.json`; a protocol change is a bump of that sha.
+Consumers install the npm release, `npm install @hotcodepush/react-native-code-push`, as the README shows.
+`ci.yml` still publishes every push to `main` and every pull request to pkg.pr.new, so a commit can be tried before its release: `npm install https://pkg.pr.new/hotcodepush-team/react-native-code-push/@hotcodepush/react-native-code-push@<sha>`, pinned by commit, never `@main`, whose moving content breaks `npm ci` against the lockfile's integrity hash.
+The shared types come from `@hotcodepush/protocol`'s npm release, `^0.2.0` in `package.json`. A protocol change is tried through its pkg.pr.new build by commit, and the pin returns to the release before this package releases.
 
 ## Releases
 
 Release-please keeps a release pull request open on `main`, and merging it tags the release.
 `release.yml` then publishes to npm with provenance over OIDC, `prepublishOnly` running the build first, so the package carries the cores the build downloads.
-A published package never depends on a pkg.pr.new URL: the protocol pin above moves to its npm release, `^0.1.0`, before this package's first release.
+A published package never depends on a pkg.pr.new URL.
 
 ## Rules
 
