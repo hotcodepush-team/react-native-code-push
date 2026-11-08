@@ -88,7 +88,7 @@
     }
   },
   "dependencies": {
-    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@af6e874f7031ac5f727213aad3f396622afe9a10"
+    "@hotcodepush/protocol": "^0.2.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
