@@ -154,7 +154,7 @@ jobs:
           npx @react-native-community/cli@latest init LatestApp --version "$version" --directory app --skip-install --skip-git-init
       - name: Install the package from this commit and the CLI the demo pins
         working-directory: app
-        run: npm install "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz "$(node -p "require('../demo/package.json').devDependencies.hotcodepush")"
+        run: npm install "$RUNNER_TEMP"/hotcodepush-react-native-code-push-*.tgz "hotcodepush@$(node -p "require('../demo/package.json').devDependencies.hotcodepush")"
       - name: Drop the iOS project, whose pod install needs macOS
         if: matrix.platform == 'android'
         run: rm -rf app/ios
