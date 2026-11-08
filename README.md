@@ -6,11 +6,11 @@ Learn more at [hotcodepush.com/react-native-code-push](https://hotcodepush.com/r
 ## Installation
 
 `npx hotcodepush init` installs the package and wires it into both native projects.
-By hand, until the package is on npm, install the preview build pkg.pr.new publishes for every commit on `main`, pinned to a commit, together with the CLI the native builds call:
+By hand, install the package together with the CLI the native builds call:
 
 ```sh
-npm install https://pkg.pr.new/hotcodepush-team/react-native-code-push/@hotcodepush/react-native-code-push@<sha>
-npm install --save-dev https://pkg.pr.new/hotcodepush-team/cli/hotcodepush@<sha>
+npm install @hotcodepush/react-native-code-push
+npm install --save-dev hotcodepush
 ```
 
 The module supports React Native 0.82 and later on the New Architecture, iOS 15.1 and Android 7.0 (API 24).
